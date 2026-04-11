@@ -1,0 +1,1244 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kalkulator Curah Hujan - HydroStats</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- GLOBAL STYLE --- */
+        body {
+            background-color: #070b14;
+            color: #f8f9fa;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-info { color: #0dcaf0 !important; }
+
+        .text-gradient-cyan {
+            background: linear-gradient(135deg, #0dcaf0, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- NAVBAR --- */
+        .custom-navbar {
+            background: rgba(15, 23, 42, 0.9) !important;
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            min-height: 75px;
+        }
+
+        .brand-subtitle {
+            display: block;
+            font-size: 0.6rem;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 700;
+            margin-top: -3px;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.6) !important;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #0dcaf0 !important;
+        }
+
+        /* --- LAYOUT STRUCTURE --- */
+        .card-neon {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .console-panel {
+            background-color: rgba(11, 17, 32, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .monitor-panel {
+            background: radial-gradient(circle at top right, rgba(13, 202, 240, 0.05), transparent 50%), rgba(7, 11, 20, 0.8);
+        }
+
+        /* --- INPUT & MATH PAD --- */
+        .custom-toggle-bg {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-pills .nav-link {
+            color: #64748b;
+            font-weight: 600;
+            border-radius: 6px;
+            padding: 0.4rem 1rem !important;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #212836;
+            color: #0dcaf0;
+        }
+
+        .input-wrapper {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .math-input {
+            font-family: 'Cambria Math', serif;
+            font-size: 1.3rem !important;
+            color: #0dcaf0 !important;
+            font-style: italic;
+        }
+
+        /* Math Pad Grid */
+        .math-pad-grid .btn {
+            border-radius: 8px;
+            font-family: 'Cambria Math', serif;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            color: #94a3b8;
+            transition: 0.2s;
+            padding: 0.4rem 0.3rem;
+        }
+
+        .math-pad-grid .btn:hover {
+            background: rgba(13, 202, 240, 0.12);
+            color: #0dcaf0;
+            border-color: rgba(13, 202, 240, 0.4);
+        }
+
+        .math-pad-grid .btn.btn-var {
+            color: #0dcaf0;
+            background: rgba(13, 202, 240, 0.05);
+            border-color: rgba(13, 202, 240, 0.2);
+            font-weight: 700;
+        }
+
+        .math-pad-grid .btn.btn-fn {
+            color: #a78bfa;
+            background: rgba(167, 139, 250, 0.05);
+            border-color: rgba(167, 139, 250, 0.2);
+        }
+
+        .math-pad-grid .btn.btn-op {
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.05);
+            border-color: rgba(251, 191, 36, 0.15);
+        }
+
+        .math-pad-grid .btn.btn-num {
+            color: #e2e8f0;
+        }
+
+        .math-pad-grid .btn.btn-del {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.05);
+            border-color: rgba(248, 113, 113, 0.2);
+        }
+
+        .math-pad-grid .btn.btn-clr {
+            color: #fb923c;
+            background: rgba(251, 146, 60, 0.05);
+            border-color: rgba(251, 146, 60, 0.2);
+        }
+
+        /* --- STEP BOXES --- */
+        .step-box {
+            background: rgba(13, 202, 240, 0.03);
+            border-left: 3px solid #0dcaf0;
+            padding: 1.2rem;
+            border-radius: 0 10px 10px 0;
+            height: 100%;
+        }
+
+        .step-box-warn {
+            background: rgba(255, 193, 7, 0.03);
+            border-left: 3px solid #ffc107;
+            padding: 1.2rem;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .step-box-success {
+            background: rgba(25, 200, 120, 0.05);
+            border-left: 3px solid #1dc878;
+            padding: 1.2rem;
+            border-radius: 0 10px 10px 0;
+        }
+
+        /* --- FORMULA DISPLAY --- */
+        .formula-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(13, 202, 240, 0.2);
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            font-family: 'Cambria Math', serif;
+            font-size: 1.1rem;
+            color: #a5f3fc;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        /* --- CALC TABLE --- */
+        .calc-table-wrapper {
+            max-height: 280px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .calc-table-wrapper::-webkit-scrollbar { width: 4px; }
+        .calc-table-wrapper::-webkit-scrollbar-track { background: transparent; }
+        .calc-table-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(13, 202, 240, 0.3);
+            border-radius: 4px;
+        }
+
+        .calc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+
+        .calc-table thead th {
+            background: rgba(13, 202, 240, 0.08);
+            color: #0dcaf0;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            padding: 0.6rem 0.8rem;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            border-bottom: 1px solid rgba(13, 202, 240, 0.2);
+            text-transform: uppercase;
+            font-size: 0.68rem;
+        }
+
+        .calc-table tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            transition: 0.15s;
+        }
+
+        .calc-table tbody tr:hover { background: rgba(13, 202, 240, 0.04); }
+
+        .calc-table td {
+            padding: 0.5rem 0.8rem;
+            color: #94a3b8;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+
+        .calc-table td.row-sum { color: #0dcaf0; font-weight: 600; }
+        .calc-table td.row-label { color: #64748b; }
+
+        /* --- BADGES --- */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #1dc878;
+            background: rgba(29, 200, 120, 0.08);
+            border: 1px solid rgba(29, 200, 120, 0.25);
+            border-radius: 20px;
+            padding: 3px 10px;
+        }
+
+        .glass-badge {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: #1dc878;
+            border-radius: 50%;
+            animation: blink 1.2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        /* --- ANIMATION --- */
+        .step-fade-in {
+            animation: fadeSlideIn 0.35s ease forwards;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Preview pill */
+        .preview-pill {
+            font-family: 'Cambria Math', serif;
+            font-style: italic;
+            font-size: 1rem;
+            color: #0dcaf0;
+            background: rgba(13, 202, 240, 0.07);
+            border: 1px solid rgba(13, 202, 240, 0.15);
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            min-height: 2.4rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .preview-pill.error {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.07);
+            border-color: rgba(248, 113, 113, 0.2);
+        }
+
+        /* Guide box */
+        .guide-box {
+            background: rgba(167, 139, 250, 0.05);
+            border: 1px dashed rgba(167, 139, 250, 0.2);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 0.72rem;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .guide-box code {
+            background: rgba(0,0,0,0.4);
+            color: #a78bfa;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        /* N-slider */
+        .n-slider-row {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 0.6rem 0.9rem;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        input[type="range"] {
+            accent-color: #0dcaf0;
+        }
+
+        footer {
+            margin-top: auto;
+            background: #0b1120;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 2.5rem 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top custom-navbar py-2">
+        <div class="container-fluid px-4 px-lg-5">
+            <a class="navbar-brand d-flex flex-column" href="index.html">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-droplet-half me-2 text-info fs-4"></i>
+                    <span class="fw-bold fs-3">Hydro<span class="text-info">Stats</span></span>
+                </div>
+                <small class="brand-subtitle">ANALISIS CURAH HUJAN</small>
+            </a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-lg-4">
+                    <li class="nav-item"><a class="nav-link fw-semibold" href="index.html">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link fw-semibold active" href="analisis.html">Analisis Cuaca</a></li>
+                    <li class="nav-item"><a class="nav-link fw-semibold" href="history.html">Arsip Data</a></li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-outline-info rounded-pill px-4 btn-sm fw-bold" href="rank.html">Peringkat Kota</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-fluid px-4 px-lg-5 py-5 flex-grow-1">
+
+        <section id="kalkulator" class="mb-4">
+            <div class="mb-4 pt-2">
+                <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3">
+                    <div>
+                        <nav aria-label="breadcrumb" class="mb-2">
+                            <ol class="breadcrumb mb-0" style="font-size: 0.75rem; letter-spacing: 1px;">
+                                <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-white-50">TOOLS</a></li>
+                                <li class="breadcrumb-item active text-info fw-bold" aria-current="page">SIMULATION ENGINE</li>
+                            </ol>
+                        </nav>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-info bg-opacity-10 p-2 rounded-3 border border-info border-opacity-25">
+                                <i class="bi bi-cpu-fill text-info fs-4"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-white fw-extrabold m-0 lh-1">Dashboard <span class="text-gradient-cyan">Simulasi</span></h2>
+                                <p class="text-white-50 small mb-0 mt-1">
+                                    <i class="bi bi-info-circle me-1"></i> Metode Analisis Akumulasi Volume Presipitasi
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <div class="glass-badge px-3 py-2 rounded-pill d-flex align-items-center">
+                            <span class="live-dot me-2"></span>
+                            <span class="text-white-50 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">SYSTEM ACTIVE</span>
+                        </div>
+                        <button class="btn btn-outline-info btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-2 shadow-sm">
+                            <i class="bi bi-clock-history"></i> Real-time Mode
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-4 w-100" style="height: 1px; background: linear-gradient(90deg, rgba(13, 202, 240, 0.3) 0%, rgba(13, 202, 240, 0) 100%);"></div>
+            </div>
+
+            <div class="card card-neon rounded-4 shadow-lg overflow-hidden">
+                <div class="row g-0">
+                    <!-- ============================================================
+                         PANEL INPUT (KIRI)
+                    ============================================================ -->
+                    <div class="col-lg-4 console-panel p-4 p-lg-5 border-end border-secondary border-opacity-10">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="text-white-50 small fw-bold">PANEL INPUT</span>
+                            <span class="live-badge"><span class="live-dot"></span>AUTO-UPDATE</span>
+                        </div>
+
+                        <!-- Tab Toggle -->
+                        <div class="custom-toggle-bg mb-4">
+                            <ul class="nav nav-pills nav-justified" role="tablist">
+                                <li class="nav-item">
+                                    <button class="nav-link active py-2 small fw-bold" id="tab-diskrit-btn"
+                                        data-bs-toggle="pill" data-bs-target="#diskrit" type="button"
+                                        onclick="switchMode('diskrit')">
+                                        <i class="bi bi-droplet-half me-1"></i> CATATAN MANUAL
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link py-2 small fw-bold" id="tab-fungsi-btn"
+                                        data-bs-toggle="pill" data-bs-target="#fungsi" type="button"
+                                        onclick="switchMode('fungsi')">
+                                        <i class="bi bi-graph-up-arrow me-1"></i> SIMULASI POLA
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="tab-content">
+                            <!-- ====== MODE: CATATAN MANUAL (DISKRIT) ====== -->
+                            <div class="tab-pane fade show active" id="diskrit">
+
+                                <div class="mb-4">
+                                    <label class="small text-white-50 mb-1 d-block fw-bold">
+                                        <i class="bi bi-clock me-1"></i> JARAK WAKTU PENGUKURAN
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" id="input-dt" class="form-control bg-dark border-secondary border-opacity-10 text-white py-3"
+                                            value="1" min="0.1" step="0.5" oninput="triggerAutoCalc()">
+                                        <span class="input-group-text bg-dark border-secondary border-opacity-10 text-white-50">Jam</span>
+                                    </div>
+                                    <div class="form-text text-white-50 small mt-1">
+                                        Seberapa sering mencatat? Misal: tiap <strong class="text-info">1 jam</strong> atau <strong class="text-info">0.5 jam</strong> (30 menit).
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="small text-white-50 mb-1 d-block fw-bold">
+                                        <i class="bi bi-list-ol me-1"></i> DATA INTENSITAS HUJAN (mm/jam)
+                                    </label>
+                                    <textarea id="input-array"
+                                        class="form-control bg-dark border-secondary border-opacity-10 text-white fs-5"
+                                        rows="4"
+                                        placeholder="Contoh: 12, 15.5, 0, 8.2, 20"
+                                        oninput="triggerAutoCalc()"></textarea>
+                                    <div class="form-text text-white-50 small mt-1">
+                                        Pisahkan angka dengan <strong class="text-info">koma</strong>.
+                                        Setiap angka = intensitas di satu titik waktu.
+                                    </div>
+                                </div>
+
+                                <!-- Contoh cepat -->
+                                <div class="mb-4">
+                                    <label class="small text-white-50 mb-2 d-block fw-bold">CONTOH CEPAT</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill"
+                                            onclick="pasteExample('5, 5, 5, 5, 5')">
+                                            Stabil 5 jam
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill"
+                                            onclick="pasteExample('2, 5, 12, 18, 25, 30')">
+                                            Intensitas Naik
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill"
+                                            onclick="pasteExample('0, 8, 20, 35, 15, 5, 0')">
+                                            Puncak Lalu Reda
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-info w-100 py-3 fw-bold shadow-lg" onclick="executeCalc('diskrit')">
+                                    HITUNG TOTAL VOLUME <i class="bi bi-calculator ms-1"></i>
+                                </button>
+                            </div>
+
+                            <!-- ====== MODE: SIMULASI POLA (FUNGSI) ====== -->
+                            <div class="tab-pane fade" id="fungsi">
+
+                                <!-- Template pola -->
+                                <div class="mb-3">
+                                    <label class="small text-white-50 d-block mb-2 fw-bold">
+                                        <i class="bi bi-magic me-1"></i> TEMPLATE POLA HUJAN
+                                    </label>
+                                    <div class="d-flex flex-wrap gap-2 mb-2">
+                                        <button class="btn btn-sm btn-outline-info rounded-pill"
+                                            onclick="setFormula('5', 0, 10)">
+                                            ☁️ Gerimis Stabil
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info rounded-pill"
+                                            onclick="setFormula('2*t', 0, 10)">
+                                            📈 Makin Lebat
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info rounded-pill"
+                                            onclick="setFormula('-0.5*t^2 + 5*t', 0, 10)">
+                                            ⛈️ Puncak Lalu Mereda
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info rounded-pill"
+                                            onclick="setFormula('10*sin(t/2)', 0, 12)">
+                                            🌊 Bergelombang
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Input rumus -->
+                                <div class="mb-3">
+                                    <label class="small text-white-50 d-block mb-1 fw-bold">
+                                        <i class="bi bi-function me-1"></i> RUMUS INTENSITAS f(t)
+                                    </label>
+                                    <div class="input-wrapper mb-2">
+                                        <div class="input-group input-group-lg border-0 bg-dark bg-opacity-25">
+                                            <span class="input-group-text bg-transparent border-0 text-info fw-bold" style="font-family: 'Cambria Math', serif; font-style:italic;">f(t) =</span>
+                                            <input type="text" id="input-fungsi"
+                                                class="form-control bg-transparent border-0 text-white math-input shadow-none py-3"
+                                                placeholder="Contoh: 3*t + 2"
+                                                oninput="updatePreview(this.value); triggerAutoCalc()">
+                                        </div>
+                                    </div>
+                                    <!-- Preview -->
+                                    <div id="math-preview" class="preview-pill mb-2">
+                                        <span class="text-white-50 small" style="font-style:normal; font-family: sans-serif;">Ketik rumus atau pilih template di atas...</span>
+                                    </div>
+                                </div>
+
+                                <!-- Math Pad -->
+                                <div class="mb-3">
+                                    <label class="small text-white-50 d-block mb-2 fw-bold">
+                                        <i class="bi bi-grid-3x3-gap me-1"></i> PAPAN RUMUS (klik untuk insert)
+                                    </label>
+                                    <div class="math-pad-grid mb-2" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;">
+                                        <!-- Baris 1: Variabel & Fungsi -->
+                                        <button class="btn py-2 btn-var fw-bold" onclick="insertToFunc('t')" title="Variabel waktu">t</button>
+                                        <button class="btn py-2 btn-fn" onclick="insertToFunc('sin(')" title="Sinus">sin</button>
+                                        <button class="btn py-2 btn-fn" onclick="insertToFunc('cos(')" title="Kosinus">cos</button>
+                                        <button class="btn py-2 btn-fn" onclick="insertToFunc('sqrt(')" title="Akar">√</button>
+                                        <button class="btn py-2 btn-fn" onclick="insertToFunc('ln(')" title="Logaritma natural">ln</button>
+                                        <!-- Baris 2: Operator -->
+                                        <button class="btn py-2 btn-op" onclick="insertToFunc('^2')" title="Kuadrat">t²</button>
+                                        <button class="btn py-2 btn-op" onclick="insertToFunc('^')" title="Pangkat">^</button>
+                                        <button class="btn py-2 btn-op" onclick="insertToFunc('*')" title="Kali">×</button>
+                                        <button class="btn py-2 btn-op" onclick="insertToFunc('/')" title="Bagi">÷</button>
+                                        <button class="btn py-2 btn-op" onclick="insertToFunc('(')" title="Kurung buka">(</button>
+                                        <!-- Baris 3: Angka cepat & simbol -->
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('+')" title="Tambah">+</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('-')" title="Kurang">−</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc(')')" title="Kurung tutup">)</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('.')" title="Desimal">.</button>
+                                        <button class="btn py-2 btn-del" onclick="backspaceInput()" title="Hapus 1 karakter"><i class="bi bi-backspace"></i></button>
+                                        <!-- Baris 4: Angka 1–5 + clear -->
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('1')">1</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('2')">2</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('3')">3</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('4')">4</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('5')">5</button>
+                                        <!-- Baris 5: Angka 6–0 + clear -->
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('6')">6</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('7')">7</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('8')">8</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('9')">9</button>
+                                        <button class="btn py-2 btn-num" onclick="insertToFunc('0')">0</button>
+                                        <!-- Baris 6: Clear all + PI + e -->
+                                        <button class="btn py-2 btn-clr" onclick="clearInput()" title="Hapus semua" style="grid-column: span 2;">
+                                            <i class="bi bi-trash3 me-1"></i> Hapus Semua
+                                        </button>
+                                        <button class="btn py-2 btn-fn" onclick="insertToFunc('PI')" title="Pi = 3.14...">π</button>
+                                        <button class="btn py-2 btn-fn" onclick="insertToFunc('e')" title="e = 2.71...">e</button>
+                                        <button class="btn py-2 btn-fn" onclick="insertToFunc('abs(')" title="Nilai absolut">|x|</button>
+                                    </div>
+                                </div>
+
+                                <!-- Panduan singkat -->
+                                <div class="guide-box mb-3">
+                                    <strong class="text-white-50 d-block mb-1">📘 Panduan Cepat:</strong>
+                                    <code>t</code> = waktu (jam) &nbsp;·&nbsp;
+                                    <code>2*t</code> = 2 kali t &nbsp;·&nbsp;
+                                    <code>t^2</code> = t kuadrat<br>
+                                    <code>sin(t)</code> = gelombang sinus &nbsp;·&nbsp;
+                                    <code>sqrt(t)</code> = akar t
+                                </div>
+
+                                <!-- Rentang waktu -->
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="small text-white-50 d-block mb-1 fw-bold">DARI JAM KE-</label>
+                                        <input type="number" id="input-a"
+                                            class="form-control bg-dark border-secondary border-opacity-10 text-white text-center fw-bold"
+                                            value="0" oninput="triggerAutoCalc()">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-white-50 d-block mb-1 fw-bold">SAMPAI JAM KE-</label>
+                                        <input type="number" id="input-b"
+                                            class="form-control bg-dark border-secondary border-opacity-10 text-white text-center fw-bold"
+                                            value="10" oninput="triggerAutoCalc()">
+                                    </div>
+                                </div>
+
+                                <!-- Slider presisi (n) -->
+                                <div class="n-slider-row mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="small text-white-50 fw-bold mb-0">
+                                            <i class="bi bi-sliders me-1"></i> PRESISI SIMULASI
+                                        </label>
+                                        <span id="n-display" class="badge bg-info text-dark fw-bold">50 titik</span>
+                                    </div>
+                                    <input type="range" id="input-n" class="form-range" min="10" max="200" step="10" value="50"
+                                        oninput="document.getElementById('n-display').innerText=this.value+' titik'; triggerAutoCalc()">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-white-50" style="font-size:0.65rem;">Kasar (cepat)</span>
+                                        <span class="text-white-50" style="font-size:0.65rem;">Presisi (lambat)</span>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-outline-info w-100 py-3 fw-bold" onclick="executeCalc('fungsi')">
+                                    JALANKAN SIMULASI <i class="bi bi-play-fill ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================
+                         PANEL MONITOR (KANAN)
+                    ============================================================ -->
+                    <div class="col-lg-8 monitor-panel p-4 p-lg-5 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-end border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+                            <div>
+                                <span class="text-white-50 small fw-bold tracking-wider d-block mb-1">HASIL AKUMULASI</span>
+                                <div class="d-flex align-items-baseline gap-2">
+                                    <span class="display-3 fw-bold text-white lh-1" id="hasil-teks">0.00</span>
+                                    <span class="fs-4 text-info fw-bold">mm</span>
+                                </div>
+                            </div>
+                            <div id="status-badge" class="badge bg-dark border border-secondary border-opacity-50 text-white-50 px-3 py-2 rounded-pill small">
+                                Menunggu Data...
+                            </div>
+                        </div>
+
+                        <div style="height: 350px; min-height: 300px;">
+                            <canvas id="kalkulatorChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION: LANGKAH PERHITUNGAN
+        ============================================================ -->
+        <section id="section-langkah" class="mb-5" style="display: none;">
+            <div class="card card-neon rounded-4 shadow-lg p-4 p-lg-5">
+                <div class="d-flex align-items-center gap-3 mb-4 border-bottom border-secondary border-opacity-25 pb-3">
+                    <h5 class="text-white fw-bold mb-0">
+                        <i class="bi bi-search text-info me-2"></i>Bagaimana Sistem Menghitung Ini?
+                    </h5>
+                    <span class="badge bg-dark border border-secondary text-white-50 small">Transparansi Data</span>
+                </div>
+
+                <div class="row g-4 mb-4 step-fade-in">
+                    <div class="col-md-4">
+                        <div class="step-box h-100">
+                            <h6 class="text-info small fw-bold mb-2"><i class="bi bi-1-circle-fill me-1"></i> Membaca Data</h6>
+                            <p class="text-white-50 small mb-1">Sistem merangkum data yang Anda masukkan menjadi interval waktu teratur.</p>
+                            <div class="mt-2 p-2 bg-dark bg-opacity-50 rounded">
+                                <span class="text-white small d-block">Jarak Waktu: <strong id="step-dt" class="text-info">—</strong></span>
+                                <span class="text-white small d-block mt-1">Jumlah Interval: <strong id="step-n" class="text-info">—</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="step-box-warn h-100">
+                            <h6 class="text-warning small fw-bold mb-2"><i class="bi bi-2-circle-fill me-1"></i> Logika Rata-rata (Trapesium)</h6>
+                            <p class="text-white-50 small mb-2">Kami menghitung rata-rata intensitas di antara dua titik waktu, lalu kalikan dengan durasinya.</p>
+                            <div class="formula-block mb-0" style="font-size: 0.85rem; padding: 0.6rem;">
+                                ½ × (I<sub>awal</sub> + I<sub>akhir</sub>) × Δt
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="step-box-success h-100">
+                            <h6 class="text-success small fw-bold mb-2"><i class="bi bi-3-circle-fill me-1"></i> Akumulasi Total</h6>
+                            <p class="text-white-50 small mb-1">Semua potongan dijumlahkan menjadi total volume presipitasi akhir.</p>
+                            <div class="text-success fw-bold fs-5 mt-2" id="step-total-val">0.00 mm</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3 step-fade-in">
+                    <div class="bg-dark bg-opacity-50 p-3 rounded-3 border border-secondary border-opacity-10">
+                        <h6 class="text-white-50 small mb-3 fw-bold"><i class="bi bi-table text-info me-1"></i> TABEL RINCIAN PERHITUNGAN PER JAM</h6>
+                        <div class="calc-table-wrapper">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tahap</th>
+                                        <th>Dari</th>
+                                        <th>Sampai</th>
+                                        <th>Intensitas Awal (mm/jam)</th>
+                                        <th>Intensitas Akhir (mm/jam)</th>
+                                        <th>Durasi</th>
+                                        <th>Volume (mm)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="step-tabel-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="mt-5 pt-5 pb-3 border-top border-secondary border-opacity-10" style="background-color: rgba(7, 11, 20, 0.8);">
+        <div class="container-fluid px-4 px-lg-5">
+            <div class="row mb-4">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-droplet-half me-2 text-info fs-4"></i>
+                        <span class="fw-bold fs-4 text-white">Hydro<span class="text-info">Stats</span></span>
+                    </div>
+                    <p class="text-white-50 small pe-lg-5">
+                        Platform analisis presipitasi yang menggabungkan data meteorologi <i>real-time</i> dengan pendekatan numerik untuk menghasilkan informasi akumulasi air berpresisi tinggi.
+                    </p>
+                </div>
+
+                <div class="col-lg-2 col-6 mb-4 mb-lg-0">
+                    <h6 class="text-white fw-bold mb-3 tracking-wider" style="font-size: 0.8rem;">NAVIGASI</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none nav-link p-0">Beranda</a></li>
+                        <li class="mb-2"><a href="#kalkulator" class="text-white-50 text-decoration-none nav-link p-0">Kalkulator Manual</a></li>
+                        <li class="mb-2"><a href="#peringkat" class="text-white-50 text-decoration-none nav-link p-0">Peringkat Global</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-6 mb-4 mb-lg-0">
+                    <h6 class="text-white fw-bold mb-3 tracking-wider" style="font-size: 0.8rem;">TEKNOLOGI</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a href="https://open-meteo.com/" target="_blank" class="text-white-50 text-decoration-none nav-link p-0">Open-Meteo API</a></li>
+                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none nav-link p-0">Chart.js</a></li>
+                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none nav-link p-0">Bootstrap 5</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-4 text-lg-end text-start">
+                    <h6 class="text-white fw-bold mb-3 tracking-wider" style="font-size: 0.8rem;">TERHUBUNG</h6>
+                    <div class="d-flex justify-content-lg-end gap-3">
+                        <a href="#" class="text-info fs-5 opacity-75 nav-link"><i class="bi bi-github"></i></a>
+                        <a href="#" class="text-info fs-5 opacity-75 nav-link"><i class="bi bi-envelope-fill"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="border-secondary border-opacity-25 my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="text-white-50 small mb-0">&copy; 2026 HydroStats. Dibuat dengan presisi logika.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
+                    <p class="text-secondary small mb-0 fst-italic">*Data hanya untuk analisis akademis, bukan peringatan kebencanaan resmi.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /* =========================================================
+           STATE GLOBAL
+        ========================================================= */
+        let calcChart = null;
+        let currentMode = 'diskrit';
+        let debounceTimer = null;
+
+        /* =========================================================
+           UTILITAS FORMULA INPUT
+        ========================================================= */
+
+        /**
+         * Memperbarui preview formula di bawah input.
+         * Menampilkan representasi yang lebih mudah dibaca,
+         * dan validasi ringan apakah rumus bisa dieksekusi.
+         */
+        function updatePreview(val) {
+            const preview = document.getElementById('math-preview');
+            if (!val || !val.trim()) {
+                preview.className = 'preview-pill';
+                preview.innerHTML = '<span class="text-white-50 small" style="font-style:normal; font-family:sans-serif;">Ketik rumus atau pilih template di atas...</span>';
+                return;
+            }
+
+            // Tampilkan versi yang lebih mudah dibaca
+            const display = val
+                .replace(/\*\*/g, '^')
+                .replace(/Math\.sin/g, 'sin')
+                .replace(/Math\.cos/g, 'cos')
+                .replace(/Math\.sqrt/g, '√')
+                .replace(/Math\.log10/g, 'log')
+                .replace(/Math\.log/g, 'ln')
+                .replace(/Math\.PI/g, 'π')
+                .replace(/Math\.E/g, 'e')
+                .replace(/Math\.abs/g, '|')
+                .replace(/\*/g, '×');
+
+            // Validasi cepat
+            try {
+                const parsed = parseFunc(val);
+                const f = new Function('t', `return ${parsed}`);
+                const test = f(1);
+                if (isNaN(test) || typeof test !== 'number') throw new Error();
+                preview.className = 'preview-pill';
+                preview.innerHTML = `<span style="font-family:'Cambria Math',serif;">f(t) = ${display}</span>`;
+            } catch(e) {
+                preview.className = 'preview-pill error';
+                preview.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i><span style="font-family:sans-serif; font-style:normal; font-size:0.8rem;">Rumus belum valid: <code>${val}</code></span>`;
+            }
+        }
+
+        /**
+         * Menyisipkan teks ke posisi kursor di input rumus.
+         */
+        function insertToFunc(text) {
+            const input = document.getElementById('input-fungsi');
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            input.value = input.value.slice(0, start) + text + input.value.slice(end);
+            // Posisikan kursor setelah teks yang baru disisipkan
+            const newPos = start + text.length;
+            input.setSelectionRange(newPos, newPos);
+            input.focus();
+            updatePreview(input.value);
+            triggerAutoCalc();
+        }
+
+        /**
+         * FIX: Hapus 1 karakter terakhir (bukan semua teks).
+         * Sesuai dengan ikon backspace yang ditampilkan.
+         */
+        function backspaceInput() {
+            const input = document.getElementById('input-fungsi');
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+
+            if (start === end && start > 0) {
+                // Tidak ada seleksi: hapus karakter sebelum kursor
+                input.value = input.value.slice(0, start - 1) + input.value.slice(end);
+                input.setSelectionRange(start - 1, start - 1);
+            } else if (start !== end) {
+                // Ada seleksi: hapus teks yang dipilih
+                input.value = input.value.slice(0, start) + input.value.slice(end);
+                input.setSelectionRange(start, start);
+            }
+
+            input.focus();
+            updatePreview(input.value);
+            triggerAutoCalc();
+        }
+
+        /**
+         * Hapus seluruh isi input rumus.
+         */
+        function clearInput() {
+            const input = document.getElementById('input-fungsi');
+            input.value = '';
+            updatePreview('');
+            input.focus();
+            triggerAutoCalc();
+        }
+
+        /**
+         * Set formula + rentang waktu sekaligus, lalu hitung.
+         */
+        function setFormula(formula, a, b) {
+            const inputF = document.getElementById('input-fungsi');
+            const inputA = document.getElementById('input-a');
+            const inputB = document.getElementById('input-b');
+            inputF.value = formula;
+            inputA.value = a;
+            inputB.value = b;
+            updatePreview(formula);
+            triggerAutoCalc();
+        }
+
+        /**
+         * Tempel contoh data ke textarea catatan manual.
+         */
+        function pasteExample(data) {
+            const ta = document.getElementById('input-array');
+            ta.value = data;
+            triggerAutoCalc();
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            triggerAutoCalc();
+        }
+
+        /* =========================================================
+           AUTO-CALCULATE (DEBOUNCED)
+        ========================================================= */
+        function triggerAutoCalc() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                executeCalc(currentMode);
+            }, 350);
+        }
+
+        /* =========================================================
+           PARSER FUNGSI MATEMATIKA
+           FIX: Urutan replace diperbaiki agar tidak terjadi
+           double-replace (contoh: sin → Math.sin → Math.Math.sin).
+           Sekarang menggunakan safe token yang tidak akan ter-replace ulang.
+        ========================================================= */
+        function parseFunc(raw) {
+            let s = raw.trim();
+
+            // 1. Pangkat: ^ → **
+            s = s.replace(/\^/g, '**');
+
+            // 2. Fungsi matematika — ganti dengan placeholder dulu,
+            //    baru ganti placeholder dengan Math.xxx
+            //    Ini mencegah "sin" dalam "Math.sin" ter-replace ulang.
+            s = s
+                .replace(/\bsin\b/g, '__SIN__')
+                .replace(/\bcos\b/g, '__COS__')
+                .replace(/\btan\b/g, '__TAN__')
+                .replace(/\bsqrt\b/g, '__SQRT__')
+                .replace(/\babs\b/g, '__ABS__')
+                .replace(/\blog10\b/g, '__LOG10__')
+                .replace(/\blog\b/g, '__LOG10__')
+                .replace(/\bln\b/g, '__LOG__')
+                .replace(/\bPI\b/g, '__PI__')
+                // e hanya sebagai konstanta jika berdiri sendiri
+                .replace(/(?<![a-zA-Z0-9_])e(?![a-zA-Z0-9_(])/g, '__E__');
+
+            // 3. Konversi placeholder ke Math.*
+            s = s
+                .replace(/__SIN__/g, 'Math.sin')
+                .replace(/__COS__/g, 'Math.cos')
+                .replace(/__TAN__/g, 'Math.tan')
+                .replace(/__SQRT__/g, 'Math.sqrt')
+                .replace(/__ABS__/g, 'Math.abs')
+                .replace(/__LOG10__/g, 'Math.log10')
+                .replace(/__LOG__/g, 'Math.log')
+                .replace(/__PI__/g, 'Math.PI')
+                .replace(/__E__/g, 'Math.E');
+
+            // 4. Perkalian implisit: 2t → 2*t, 3( → 3*(
+            s = s.replace(/(\d)(t\b)/g, '$1*$2');
+            s = s.replace(/(\d)(\()/g, '$1*$2');
+            s = s.replace(/(\))\s*(\()/g, '$1*$2');
+
+            return s;
+        }
+
+        /* =========================================================
+           KALKULASI UTAMA
+        ========================================================= */
+        function executeCalc(mode) {
+            let labels     = [];
+            let dataPoints = [];
+            let trapezoids = [];
+            let total      = 0;
+            let dtValue    = 0;
+
+            /* ------ MODE: CATATAN MANUAL (DISKRIT) ------ */
+            if (mode === 'diskrit') {
+                const dt  = parseFloat(document.getElementById('input-dt').value);
+                const raw = document.getElementById('input-array').value.trim();
+
+                // Validasi input
+                if (isNaN(dt) || dt <= 0) {
+                    setStatusBadge('Jarak Waktu Tidak Valid', 'danger');
+                    return;
+                }
+                if (!raw) return;
+
+                dataPoints = raw.split(',')
+                    .map(s => parseFloat(s.trim()))
+                    .filter(v => !isNaN(v));
+
+                if (dataPoints.length < 2) {
+                    setStatusBadge('Minimal 2 Titik Data', 'danger');
+                    return;
+                }
+
+                dtValue = dt;
+
+                dataPoints.forEach((y, i) => {
+                    // FIX: Label pakai "Jam X" bukan "tX" agar lebih jelas
+                    const jamLabel = `Jam ${parseFloat((i * dt).toFixed(2))}`;
+                    labels.push(jamLabel);
+
+                    if (i > 0) {
+                        const y1   = dataPoints[i - 1];
+                        // Rumus trapesium: ½ × (y1 + y2) × Δt
+                        const area = ((y1 + y) / 2) * dt;
+                        total += area;
+                        trapezoids.push({
+                            idx:  i,
+                            t1:   `Jam ${parseFloat(((i - 1) * dt).toFixed(2))}`,
+                            t2:   `Jam ${parseFloat((i * dt).toFixed(2))}`,
+                            y1:   y1.toFixed(3),
+                            y2:   y.toFixed(3),
+                            // FIX: tampilkan satuan di kolom durasi
+                            dt:   `${dt.toFixed(2)} jam`,
+                            area: area.toFixed(4)
+                        });
+                    }
+                });
+
+            /* ------ MODE: SIMULASI POLA (FUNGSI) ------ */
+            } else {
+                const raw = document.getElementById('input-fungsi').value.trim();
+                const a   = parseFloat(document.getElementById('input-a').value);
+                const b   = parseFloat(document.getElementById('input-b').value);
+                // FIX: n sekarang dari slider yang terlihat
+                const n   = Math.max(10, Math.min(200, parseInt(document.getElementById('input-n').value) || 50));
+
+                if (!raw) return;
+                if (isNaN(a) || isNaN(b) || a >= b) {
+                    setStatusBadge('Rentang Jam Tidak Valid (harus a < b)', 'danger');
+                    return;
+                }
+
+                const parsed = parseFunc(raw);
+                let f;
+                try {
+                    f = new Function('t', `"use strict"; return ${parsed}`);
+                    const testVal = f(a);
+                    if (typeof testVal !== 'number' || isNaN(testVal)) throw new Error('NaN');
+                } catch (e) {
+                    setStatusBadge('Rumus Tidak Valid — Cek Sintaks', 'danger');
+                    return;
+                }
+
+                dtValue = (b - a) / n;
+
+                for (let i = 0; i <= n; i++) {
+                    const t   = a + i * dtValue;
+                    const y   = f(t);
+                    // FIX: Label sumbu-x pakai "Jam X.X"
+                    labels.push(`Jam ${t.toFixed(1)}`);
+                    dataPoints.push(parseFloat(y.toFixed(4)));
+
+                    if (i > 0) {
+                        const y1   = dataPoints[i - 1];
+                        const area = ((y1 + y) / 2) * dtValue;
+                        total += area;
+                        trapezoids.push({
+                            idx:  i,
+                            t1:   `Jam ${(a + (i - 1) * dtValue).toFixed(2)}`,
+                            t2:   `Jam ${t.toFixed(2)}`,
+                            y1:   y1.toFixed(4),
+                            y2:   y.toFixed(4),
+                            // FIX: tampilkan satuan di kolom durasi
+                            dt:   `${dtValue.toFixed(4)} jam`,
+                            area: area.toFixed(4)
+                        });
+                    }
+                }
+            }
+
+            renderChart(labels, dataPoints, mode);
+            renderHeader(total);
+            renderSteps(trapezoids, dtValue, total);
+        }
+
+        /* =========================================================
+           RENDER: HEADER HASIL
+        ========================================================= */
+        function renderHeader(total) {
+            document.getElementById('hasil-teks').innerText = total.toFixed(2);
+            setStatusBadge('Data Berhasil Dihitung ✓', 'info');
+        }
+
+        function setStatusBadge(text, type) {
+            const badge = document.getElementById('status-badge');
+            badge.innerText = text;
+            badge.className = `badge px-3 py-2 rounded-pill small`;
+            if (type === 'info')   badge.classList.add('bg-info', 'text-dark');
+            else if (type === 'danger') badge.classList.add('bg-danger', 'text-white');
+            else badge.classList.add('bg-dark', 'border', 'border-secondary', 'border-opacity-50', 'text-white-50');
+        }
+
+        /* =========================================================
+           RENDER: GRAFIK
+           FIX: Tambah opsi tick limit khusus untuk mode fungsi
+               agar label jam tidak terlalu padat.
+        ========================================================= */
+        function renderChart(labels, data, mode) {
+            calcChart.data.labels = labels;
+            calcChart.data.datasets[0].data = data;
+
+            // Sesuaikan jumlah tick agar tidak penuh sesak
+            const maxTicks = mode === 'fungsi' ? 8 : Math.min(labels.length, 12);
+            calcChart.options.scales.x.ticks.maxTicksLimit = maxTicks;
+
+            calcChart.update('active');
+        }
+
+        /* =========================================================
+           RENDER: LANGKAH-LANGKAH DETAIL
+        ========================================================= */
+        function renderSteps(trapezoids, dtValue, total) {
+            document.getElementById('section-langkah').style.display = 'block';
+
+            document.getElementById('step-dt').innerText = `${parseFloat(dtValue).toFixed(4)} Jam`;
+            document.getElementById('step-n').innerText  = `${trapezoids.length} interval`;
+
+            renderTabel(trapezoids);
+
+            document.getElementById('step-total-val').innerText = total.toFixed(4) + ' mm';
+        }
+
+        function renderTabel(trapezoids) {
+            const tbody = document.getElementById('step-tabel-body');
+            let html     = '';
+            let runTotal = 0;
+
+            trapezoids.forEach((tr, i) => {
+                runTotal += parseFloat(tr.area);
+                html += `
+                    <tr>
+                        <td class="row-label">Tahap ${i + 1}</td>
+                        <td>${tr.t1}</td>
+                        <td>${tr.t2}</td>
+                        <td>${tr.y1}</td>
+                        <td>${tr.y2}</td>
+                        <td style="color:#fbbf24;">${tr.dt}</td>
+                        <td class="row-sum">${tr.area}</td>
+                    </tr>`;
+            });
+
+            html += `
+                <tr style="border-top: 2px solid rgba(13,202,240,0.3); background: rgba(13,202,240,0.03);">
+                    <td colspan="6" class="text-end fw-bold" style="color:#a5f3fc; font-size:0.8rem; padding: 0.7rem 0.8rem;">
+                        TOTAL AKUMULASI VOLUME
+                    </td>
+                    <td class="row-sum" style="color:#1dc878; font-size:0.9rem; font-weight:700;">
+                        ${runTotal.toFixed(4)} mm
+                    </td>
+                </tr>`;
+
+            tbody.innerHTML = html;
+        }
+
+        /* =========================================================
+           INISIALISASI CHART
+        ========================================================= */
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctx = document.getElementById('kalkulatorChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+            gradient.addColorStop(0, 'rgba(13, 202, 240, 0.35)');
+            gradient.addColorStop(1, 'rgba(13, 202, 240, 0)');
+
+            calcChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Intensitas (mm/jam)',
+                        data: [],
+                        borderColor: '#0dcaf0',
+                        borderWidth: 2.5,
+                        fill: true,
+                        backgroundColor: gradient,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#0dcaf0',
+                        pointBorderColor: 'transparent'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 300 },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(7, 11, 20, 0.9)',
+                            borderColor: 'rgba(13, 202, 240, 0.3)',
+                            borderWidth: 1,
+                            titleColor: '#0dcaf0',
+                            bodyColor: '#e2e8f0',
+                            callbacks: {
+                                label: ctx => ` ${ctx.parsed.y.toFixed(3)} mm/jam`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#64748b', maxTicksLimit: 10, font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.04)' },
+                            ticks: {
+                                color: '#64748b',
+                                font: { size: 10 },
+                                callback: v => v + ' mm/j'
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // FIX: Auto-hitung saat halaman pertama kali dibuka
+            // (mode diskrit default, array kosong, tidak ada data — tidak crash)
+            // Tidak ada auto-run di awal karena textarea kosong.
+        });
+    </script>
+</body>
+</html>

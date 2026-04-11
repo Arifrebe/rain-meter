@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HydroStats - Analisis Curah Hujan Presisi</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top custom-navbar py-2">
+    <div class="container-fluid px-4 px-lg-5">
+      <a class="navbar-brand d-flex flex-column" href="#">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-droplet-half me-2 text-info"></i>
+          <span class="fw-bold fs-3">Hydro<span class="text-info">Stats</span></span>
+        </div>
+        <small class="brand-subtitle">ANALISIS CURAH HUJAN</small>
+      </a>
+
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center gap-lg-4">
+          <li class="nav-item"><a class="nav-link fw-semibold active" href="index.html">Beranda</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="analysis.html">Analisis Cuaca</a></li>
+          <li class="nav-item"><a class="nav-link fw-semibold" href="history.html">Arsip Data</a></li>
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-outline-info rounded-pill px-4 btn-sm fw-bold" href="rank.html">Peringkat Kota</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container-fluid px-4 px-lg-5 mt-5 pt-lg-4">
+    <div class="row g-5 align-items-center">
+
+      <div class="col-lg-5">
+        <h1 class="text-white fw-extrabold display-4 hero-title mb-3">
+          Pantau Akumulasi <br>
+          <span class="text-gradient-cyan">Air Hujan</span>
+          <span class="text-gradient-purple">Presisi.</span>
+        </h1>
+        <p class="text-white mb-5 fs-5">
+          Menghitung total volume air yang jatuh menggunakan metode kalkulus integral untuk akurasi data meteorologi
+          tingkat tinggi.
+        </p>
+
+        <div class="card card-neon rounded-4 p-4 shadow-lg">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="text-white small fw-bold tracking-wider">LOKASI TERDETEKSI</span>
+            <span class="badge rounded-pill badge-neon px-3 py-2">
+              <i class="bi bi-broadcast me-1"></i> Data Langsung
+            </span>
+          </div>
+          <h2 class="text-white fw-bold mb-1" id="nama-lokasi">Medan, Indonesia</h2>
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <span
+              class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-3 py-2">
+              <i class="bi bi-calendar3 me-2"></i>
+              <span id="current-date">Memuat tanggal...</span>
+            </span>
+          </div>
+          <div class="d-flex align-items-baseline gap-2">
+            <span class="display-large-num" id="total-hujan">12.5</span>
+            <span class="fs-2 stat-unit">mm/m²</span>
+          </div>
+          <div class="mt-4 p-3 info-box-cyan rounded-3">
+            <p class="small m-0 italic fw-medium text-info">
+              <i class="bi bi-calculator me-1 text-info"></i>
+              Dihitung menggunakan Integral Trapesium — diperbarui s/d <span id="jam-terakhir">...</span>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="card card-neon rounded-4 p-4 shadow-lg h-100">
+          <div
+            class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary border-opacity-10 pb-3">
+            <h5 class="text-white m-0 fw-bold">Grafik Intensitas Hujan (mm/jam)</h5>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-white small">Periode:</span>
+              <span class="badge bg-secondary bg-opacity-10 text-white rounded-pill px-3">24 Jam</span>
+            </div>
+          </div>
+          <div style="height: 350px;">
+            <canvas id="rainChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <section class="container-fluid px-4 px-lg-5 mt-5 pt-5 border-top border-secondary border-opacity-10">
+      <div class="row mb-5 text-center justify-content-center">
+        <div class="col-lg-6">
+          <h2 class="text-white fw-bold">Akurasi Sains yang <span class="text-info">Bisa Diandalkan.</span></h2>
+          <p class="text-white-50 mt-3">
+            HydroStats tidak sekadar menampilkan cuaca, melainkan menganalisis data mentah menjadi wawasan volume
+            presipitasi yang akurat.
+          </p>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card card-neon rounded-4 p-4 h-100 text-center text-md-start">
+            <div class="mb-4">
+              <div class="d-inline-flex align-items-center justify-content-center bg-info bg-opacity-10 rounded-circle"
+                style="width: 60px; height: 60px;">
+                <i class="bi bi-calculator-fill fs-3 text-info"></i>
+              </div>
+            </div>
+            <h4 class="text-white fw-bold mb-3">Pendekatan Kalkulus</h4>
+            <p class="text-white-50 mb-0">
+              Alih-alih menggunakan rata-rata kasar, mesin kami menghitung area di bawah kurva intensitas <i>f(t)</i>
+              menggunakan <strong>Integral Trapesium</strong> untuk mendapatkan total volume air yang sebenarnya.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card card-neon rounded-4 p-4 h-100 text-center text-md-start">
+            <div class="mb-4">
+              <div class="d-inline-flex align-items-center justify-content-center bg-info bg-opacity-10 rounded-circle"
+                style="width: 60px; height: 60px;">
+                <i class="bi bi-globe-americas fs-3 text-info"></i>
+              </div>
+            </div>
+            <h4 class="text-white fw-bold mb-3">Data Meteorologi Global</h4>
+            <p class="text-white-50 mb-0">
+              Terintegrasi langsung dengan API cuaca global yang memanfaatkan model peramalan standar industri (seperti
+              ECMWF & GFS) dengan resolusi spasial tinggi.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card card-neon rounded-4 p-4 h-100 text-center text-md-start">
+            <div class="mb-4">
+              <div class="d-inline-flex align-items-center justify-content-center bg-info bg-opacity-10 rounded-circle"
+                style="width: 60px; height: 60px;">
+                <i class="bi bi-shield-check fs-3 text-info"></i>
+              </div>
+            </div>
+            <h4 class="text-white fw-bold mb-3">Mitigasi & Perencanaan</h4>
+            <p class="text-white-50 mb-0">
+              Data akumulasi yang presisi sangat krusial untuk peringatan dini banjir, perencanaan drainase perkotaan,
+              hingga optimalisasi irigasi pertanian.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container-fluid px-4 px-lg-5 mt-5 pt-5 pb-5">
+      <div class="card card-neon rounded-4 p-5 text-center text-lg-start border-0"
+        style="background: linear-gradient(135deg, rgba(13, 202, 240, 0.05), rgba(102, 16, 242, 0.05));">
+        <div class="row align-items-center">
+          <div class="col-lg-8 mb-4 mb-lg-0">
+            <h2 class="text-white fw-bold mb-3">Punya Fungsi Curah Hujan Sendiri?</h2>
+            <p class="text-white-50 fs-5 mb-0">
+              Uji algoritma kami menggunakan Kalkulator Manual. Masukkan fungsi matematika <i>f(t)</i> atau deret data
+              spesifik Anda, lalu amati bagaimana web ini menghitung nilai integralnya secara seketika.
+            </p>
+          </div>
+          <div class="col-lg-4 text-lg-end text-center">
+            <a href="#kalkulator" class="btn btn-info btn-lg rounded-pill fw-bold px-5 py-3 shadow"
+              style="transition: transform 0.3s; color: #070b14;">
+              <i class="bi bi-calculator-fill me-2"></i> Coba Kalkulator
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mt-5 pt-5 pb-3 border-top border-secondary border-opacity-10"
+    style="background-color: rgba(7, 11, 20, 0.8);">
+    <div class="container-fluid px-4 px-lg-5">
+      <div class="row mb-4">
+        <div class="col-lg-4 mb-4 mb-lg-0">
+          <div class="d-flex align-items-center mb-3">
+            <i class="bi bi-droplet-half me-2 text-info fs-4"></i>
+            <span class="fw-bold fs-4 text-white">Hydro<span class="text-info">Stats</span></span>
+          </div>
+          <p class="text-white-50 small pe-lg-5">
+            Platform analisis presipitasi yang menggabungkan data meteorologi <i>real-time</i> dengan pendekatan
+            numerik untuk menghasilkan informasi akumulasi air berpresisi tinggi.
+          </p>
+        </div>
+
+        <div class="col-lg-2 col-6 mb-4 mb-lg-0">
+          <h6 class="text-white fw-bold mb-3 tracking-wider" style="font-size: 0.8rem;">NAVIGASI</h6>
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none nav-link p-0">Beranda</a></li>
+            <li class="mb-2"><a href="#kalkulator" class="text-white-50 text-decoration-none nav-link p-0">Kalkulator
+                Manual</a></li>
+            <li class="mb-2"><a href="#peringkat" class="text-white-50 text-decoration-none nav-link p-0">Peringkat
+                Global</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2 col-6 mb-4 mb-lg-0">
+          <h6 class="text-white fw-bold mb-3 tracking-wider" style="font-size: 0.8rem;">TEKNOLOGI</h6>
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2"><a href="https://open-meteo.com/" target="_blank"
+                class="text-white-50 text-decoration-none nav-link p-0">Open-Meteo API</a></li>
+            <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none nav-link p-0">Chart.js</a></li>
+            <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none nav-link p-0">Bootstrap 5</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-4 text-lg-end text-start">
+          <h6 class="text-white fw-bold mb-3 tracking-wider" style="font-size: 0.8rem;">TERHUBUNG</h6>
+          <div class="d-flex justify-content-lg-end gap-3">
+            <a href="#" class="text-info fs-5 opacity-75 nav-link"><i class="bi bi-github"></i></a>
+            <a href="#" class="text-info fs-5 opacity-75 nav-link"><i class="bi bi-envelope-fill"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-secondary border-opacity-25 my-4">
+
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start">
+          <p class="text-white-50 small mb-0">
+            &copy; 2026 HydroStats. Dibuat dengan presisi logika.
+          </p>
+        </div>
+        <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
+          <p class="text-secondary small mb-0 fst-italic">
+            *Data hanya untuk analisis akademis, bukan peringatan kebencanaan resmi.
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // --- Dari: chart-config.js ---
+    let rainChart; // Variabel global untuk menyimpan instance grafik
+
+    function initRainChart() {
+      const canvas = document.getElementById('rainChart');
+      if (!canvas) return; // Mencegah error jika elemen tidak ditemukan
+
+      const ctx = canvas.getContext('2d');
+
+      // Buat Gradient untuk background grafik
+      const chartGradient = ctx.createLinearGradient(0, 0, 0, 400);
+      chartGradient.addColorStop(0, 'rgba(13, 202, 240, 0.4)');
+      chartGradient.addColorStop(1, 'rgba(102, 16, 242, 0)');
+
+      rainChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [], // Dikosongkan dulu, nanti diisi dari API
+          datasets: [{
+            label: 'Intensitas (mm/h)',
+            data: [], // Dikosongkan dulu
+            borderColor: '#0dcaf0',
+            borderWidth: 3,
+            backgroundColor: chartGradient,
+            fill: true,
+            tension: 0.4, // Membuat kurva melengkung (tidak kaku)
+            pointBackgroundColor: '#0dcaf0',
+            pointRadius: 4,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              ticks: { color: '#94a3b8' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8' }
+            }
+          }
+        }
+      });
+    }
+
+    // Fungsi ini akan dipanggil oleh weather-api.js nanti
+    function updateChartData(labels, dataPoints) {
+      if (rainChart) {
+        rainChart.data.labels = labels;
+        rainChart.data.datasets[0].data = dataPoints;
+        rainChart.update(); // Perintah untuk merender ulang grafik Chart.js
+      }
+    }
+
+    // --- Dari: weather-api.js ---
+    // Koordinat default (Medan, Indonesia)
+    const LAT = 3.5952;
+    const LON = 98.6722;
+
+    // Fungsi untuk menghitung integral numerik (Aturan Trapesium)
+    function hitungIntegralTrapesium(dataIntensitas) {
+      let totalArea = 0;
+      // Delta t = 1 (karena data API per 1 jam)
+      for (let i = 0; i < dataIntensitas.length - 1; i++) {
+        totalArea += (dataIntensitas[i] + dataIntensitas[i + 1]) / 2;
+      }
+      return totalArea.toFixed(2); // Dibulatkan 2 angka di belakang koma
+    }
+
+    // Fungsi utama mengambil data dari API
+    async function fetchWeatherData() {
+      // Tampilkan status "Loading..." di UI
+      document.getElementById('total-hujan').innerText = "...";
+
+      // URL Open-Meteo: Mengambil presipitasi per jam untuk 1 hari (24 jam)
+      // Menggunakan past_days=0&forecast_days=1 agar data mencakup hari ini sejak tengah malam
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=precipitation&timezone=Asia%2FJakarta&forecast_days=1&past_days=0`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Ambil semua data curah hujan dan waktu dari API (24 titik: 00:00 – 23:00)
+        const semuaIntensitas = data.hourly.precipitation;
+        const semuaWaktu = data.hourly.time;
+
+        // ✅ FIX: Ambil jam saat ini (timezone lokal pengguna)
+        // Hanya proses data dari jam 00:00 sampai jam SEKARANG (inklusif)
+        // Ini mencegah jam-jam masa depan ikut dihitung dalam akumulasi
+        const jamSekarang = new Date().getHours(); // angka 0–23
+
+        // Potong array hanya sampai indeks jam sekarang + 1 (slice eksklusif di ujung)
+        // Contoh: jam 14 → slice(0, 15) → ambil index 0..14 (15 titik data)
+        const intensitasHujan = semuaIntensitas.slice(0, jamSekarang + 1);
+        const waktuMentah = semuaWaktu.slice(0, jamSekarang + 1);
+
+        // Format waktu agar lebih enak dibaca (misal: "2026-04-05T14:00" → "14:00")
+        const labelWaktu = waktuMentah.map(w => w.slice(11, 16));
+
+        // 1. Hitung Integral hanya dari data yang sudah terjadi (real-time)
+        const totalCurahHujan = hitungIntegralTrapesium(intensitasHujan);
+
+        // 2. Update UI HTML (Angka Besar di Kiri)
+        document.getElementById('total-hujan').innerText = totalCurahHujan;
+        document.getElementById('nama-lokasi').innerText = "Medan, Indonesia";
+
+        // Tampilkan info "data diperbarui s/d jam XX:00"
+        const jamLabel = String(jamSekarang).padStart(2, '0') + ':00';
+        const elJam = document.getElementById('jam-terakhir');
+        if (elJam) elJam.innerText = `jam ${jamLabel} WIB`;
+
+        // 3. Lempar data ke grafik — hanya jam yang sudah berlalu
+        updateChartData(labelWaktu, intensitasHujan);
+
+      } catch (error) {
+        console.error("Gagal mengambil data cuaca:", error);
+        document.getElementById('total-hujan').innerText = "Error";
+      }
+    }
+
+    // --- Dari: main.js ---
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Inisialisasi Grafik Chart.js (dalam kondisi kosong)
+      initRainChart();
+
+      // 2. Tarik data cuaca dan jalankan kalkulus
+      fetchWeatherData();
+
+      // Update tanggal hari ini di UI
+      const dateElement = document.getElementById('current-date');
+      if (dateElement) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        dateElement.innerText = new Date().toLocaleDateString('id-ID', options);
+      }
+
+      // 3. Efek Navbar mengecil saat di-scroll (UI/UX enhancement)
+      window.addEventListener('scroll', function () {
+        const nav = document.querySelector('.custom-navbar');
+        if (window.scrollY > 50) {
+          nav.style.minHeight = '60px';
+          nav.style.paddingTop = '5px';
+          nav.style.paddingBottom = '5px';
+          nav.style.background = 'rgba(15, 23, 42, 0.98)'; // Lebih solid
+        } else {
+          nav.style.minHeight = '75px';
+          nav.style.paddingTop = '10px';
+          nav.style.paddingBottom = '10px';
+          nav.style.background = 'rgba(15, 23, 42, 0.8)'; // Transparan
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

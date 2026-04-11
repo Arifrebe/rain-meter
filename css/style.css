@@ -1,0 +1,132 @@
+/* --- BASE STYLING --- */
+body {
+    background-color: #070b14;
+    color: #f8f9fa;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow-x: hidden;
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Blob Efek Warna-Warni di Background */
+body::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(13, 202, 240, 0.15) 0%, transparent 70%);
+    top: -200px;
+    left: -200px;
+    z-index: -1;
+}
+
+body::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(102, 16, 242, 0.1) 0%, transparent 70%);
+    bottom: 0;
+    right: -100px;
+    z-index: -1;
+}
+
+/* --- NAVBAR --- */
+.custom-navbar {
+    background: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 75px;
+}
+
+.brand-subtitle {
+    display: block;
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-weight: 700;
+    margin-top: -3px;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.6) !important;
+    transition: 0.3s;
+}
+
+.nav-link:hover {
+    color: #0dcaf0 !important;
+}
+
+.nav-link.active {
+    color: #0dcaf0 !important;
+}
+
+/* --- HERO TEXT --- */
+.hero-title {
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+}
+
+.text-gradient-cyan {
+    background: linear-gradient(135deg, #0dcaf0, #00f2fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-purple {
+    background: linear-gradient(135deg, #a78bfa, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* --- CARDS NEON --- */
+.card-neon {
+    background: rgba(30, 41, 59, 0.4) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    position: relative;
+    transition: 0.4s ease;
+}
+
+.card-neon:hover {
+    border-color: rgba(13, 202, 240, 0.4) !important;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.card-neon::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, #0dcaf0, transparent);
+}
+
+/* --- STATS & BADGES --- */
+.display-large-num {
+    font-size: 5rem;
+    font-weight: 800;
+    background: linear-gradient(180deg, #fff 40%, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-unit {
+    color: #0dcaf0;
+    font-weight: 600;
+}
+
+.badge-neon {
+    background: rgba(13, 202, 240, 0.1);
+    color: #0dcaf0;
+    border: 1px solid rgba(13, 202, 240, 0.2);
+}
+
+.info-box-cyan {
+    background: linear-gradient(90deg, rgba(13, 202, 240, 0.05), transparent);
+    border-left: 3px solid #0dcaf0;
+}
+
+.tracking-wider {
+    letter-spacing: 2px;
+}

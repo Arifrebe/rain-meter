@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Arsip HydroStats - Analisis 7 Hari</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* ══════════════════════════════════════════════
+       DESIGN TOKENS
+    ══════════════════════════════════════════════ */
+        :root {
+            --bg-dark: #070b14;
+            --bg-surface: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.55);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --cyan: #0dcaf0;
+            --cyan-dim: rgba(13, 202, 240, 0.15);
+            --cyan-glow: rgba(13, 202, 240, 0.35);
+            --text-muted: #64748b;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius-card: 16px;
+        }
+
+        /* ══════════════════════════════════════════════
+       BASE
+    ══════════════════════════════════════════════ */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image:
+                radial-gradient(ellipse 80% 50% at 20% -10%, rgba(13, 202, 240, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(102, 16, 242, 0.05) 0%, transparent 60%);
+            background-attachment: fixed;
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* ══════════════════════════════════════════════
+       NAVBAR
+       FIX: z-index harus lebih tinggi dari Bootstrap sticky-top (1020)
+       dan dari semua card yang punya backdrop-filter / transform
+       karena keduanya otomatis membuat stacking context baru yang
+       bisa "mengalahkan" navbar jika z-index navbar tidak eksplisit.
+    ══════════════════════════════════════════════ */
+        .custom-navbar {
+            background: rgba(7, 11, 20, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.3s ease, padding 0.3s ease;
+            /* ↓ KUNCI: paksa navbar selalu di atas semua card stacking context */
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+
+        .brand-subtitle {
+            font-size: 0.6rem;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+            margin-top: -2px;
+        }
+
+        /* ══════════════════════════════════════════════
+       TYPOGRAPHY HELPERS
+    ══════════════════════════════════════════════ */
+        .text-gradient {
+            background: linear-gradient(135deg, #0dcaf0, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ══════════════════════════════════════════════
+       CARDS
+       FIX: isolation: isolate mencegah stacking context internal card
+       (dari backdrop-filter/transform) bocor keluar dan bersaing
+       dengan navbar. Semua z-index di dalam card hanya berlaku
+       di dalam card itu sendiri.
+    ══════════════════════════════════════════════ */
+        .card-glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-card);
+            transition: border-color 0.25s, transform 0.25s, background 0.25s;
+            isolation: isolate;
+            /* ← cegah stacking context bocor ke luar card */
+        }
+
+        .card-glass.clickable {
+            cursor: pointer;
+        }
+
+        .card-glass.clickable:hover {
+            border-color: rgba(13, 202, 240, 0.5);
+            transform: translateY(-3px);
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .card-glass.clickable:active {
+            transform: translateY(-1px);
+        }
+
+        /* ══════════════════════════════════════════════
+       RAIN BAR (inline progress indicator)
+    ══════════════════════════════════════════════ */
+        .rain-bar-track {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .rain-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #0dcaf0, #6366f1);
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* ══════════════════════════════════════════════
+       SKELETON LOADING
+    ══════════════════════════════════════════════ */
+        .skeleton {
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.04) 25%,
+                    rgba(255, 255, 255, 0.09) 50%,
+                    rgba(255, 255, 255, 0.04) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.6s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-card);
+            padding: 16px 20px;
+            margin-bottom: 12px;
+        }
+
+        /* ══════════════════════════════════════════════
+       FORM INPUTS
+    ══════════════════════════════════════════════ */
+        .input-dark {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            border-radius: 10px !important;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-dark:focus {
+            background: rgba(0, 0, 0, 0.4) !important;
+            border-color: var(--cyan) !important;
+            box-shadow: 0 0 0 3px var(--cyan-dim) !important;
+            color: white !important;
+        }
+
+        .input-dark::placeholder {
+            color: var(--text-muted) !important;
+        }
+
+        .input-dark.is-invalid-custom {
+            border-color: var(--danger) !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+        }
+
+        .form-label-custom {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .helper-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        /* ══════════════════════════════════════════════
+       BUTTONS
+    ══════════════════════════════════════════════ */
+        .btn-cyan {
+            background: var(--cyan);
+            color: #070b14;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+        }
+
+        .btn-cyan:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--cyan-glow);
+            color: #070b14;
+        }
+
+        .btn-cyan:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(13, 202, 240, 0.1);
+            color: var(--cyan);
+            border-color: rgba(13, 202, 240, 0.3);
+        }
+
+        /* ══════════════════════════════════════════════
+       INLINE ERROR / ALERT STATES
+    ══════════════════════════════════════════════ */
+        .alert-inline {
+            border-radius: 10px;
+            font-size: 0.83rem;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-inline.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+        }
+
+        .alert-inline.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            color: #fcd34d;
+        }
+
+        /* ══════════════════════════════════════════════
+       COORD RESULTS SECTION
+    ══════════════════════════════════════════════ */
+        #coord-results {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+        }
+
+        #coord-results.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        /* ══════════════════════════════════════════════
+       MODAL
+    ══════════════════════════════════════════════ */
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            color: white;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px 24px;
+        }
+
+        .modal-body {
+            padding: 20px 24px;
+        }
+
+        .modal-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 16px 24px;
+        }
+
+        /* ══════════════════════════════════════════════
+       TABLE
+       FIX: Bootstrap .table inject CSS variables --bs-table-bg,
+       --bs-table-color, --bs-table-border-color yang default-nya
+       light theme. Jika tidak di-reset di sini, Bootstrap menang
+       dan teks jadi gelap di atas background gelap = tidak terbaca.
+       Solusi: override semua --bs-table-* variables di selector ini.
+    ══════════════════════════════════════════════ */
+        .table-hydro {
+            /* ↓ Reset Bootstrap table variables ke dark theme */
+            --bs-table-bg: transparent;
+            --bs-table-color: #cbd5e1;
+            --bs-table-border-color: rgba(255, 255, 255, 0.07);
+            --bs-table-striped-bg: rgba(255, 255, 255, 0.025);
+            --bs-table-striped-color: #cbd5e1;
+            --bs-table-hover-bg: rgba(13, 202, 240, 0.07);
+            --bs-table-hover-color: #e2e8f0;
+            --bs-table-active-bg: rgba(13, 202, 240, 0.12);
+            --bs-table-active-color: #f1f5f9;
+
+            font-size: 0.83rem;
+            color: #cbd5e1;
+            /* lebih terang dari sebelumnya (#94a3b8) */
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+
+        /* Header: background subtle + border bawah lebih tegas */
+        .table-hydro thead tr {
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .table-hydro th {
+            color: #94a3b8;
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 700;
+            border-color: rgba(255, 255, 255, 0.07);
+            padding: 10px 14px;
+            white-space: nowrap;
+        }
+
+        .table-hydro td {
+            border-color: rgba(255, 255, 255, 0.05);
+            padding: 10px 14px;
+            vertical-align: middle;
+            color: #cbd5e1;
+            /* terang, terbaca di atas dark background */
+        }
+
+        /* Zebra striping: baris genap sedikit lebih terang */
+        .table-hydro tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Hover: cyan tint agar user tahu baris aktif */
+        .table-hydro tbody tr:hover {
+            background: rgba(13, 202, 240, 0.07) !important;
+            color: #e2e8f0;
+        }
+
+        .table-hydro tbody tr:hover td {
+            color: #e2e8f0;
+        }
+
+        /* ══════════════════════════════════════════════
+       BADGE RANK
+    ══════════════════════════════════════════════ */
+        .rank-badge {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .rank-1 {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .rank-2 {
+            background: rgba(148, 163, 184, 0.12);
+            color: #94a3b8;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+
+        .rank-3 {
+            background: rgba(180, 83, 9, 0.12);
+            color: #d97706;
+            border: 1px solid rgba(180, 83, 9, 0.25);
+        }
+
+        .rank-other {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--card-border);
+        }
+
+        /* ══════════════════════════════════════════════
+       SECTION DIVIDER
+    ══════════════════════════════════════════════ */
+        .section-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* ══════════════════════════════════════════════
+       SPINNER INLINE
+    ══════════════════════════════════════════════ */
+        .spinner-sm {
+            width: 14px;
+            height: 14px;
+            border-width: 2px;
+        }
+
+        /* ══════════════════════════════════════════════
+       CHART CONTAINER
+    ══════════════════════════════════════════════ */
+        .chart-container {
+            position: relative;
+            height: 220px;
+        }
+
+        /* ══════════════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════════════ */
+        footer {
+            background: rgba(7, 11, 20, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ══════════════════════════════════════════════
+       NAVBAR
+  ══════════════════════════════════════════════ -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top custom-navbar py-2">
+        <div class="container-fluid px-4 px-lg-5">
+            <a class="navbar-brand d-flex flex-column" href="index.html">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-droplet-half me-2 text-info"></i>
+                    <span class="fw-bold fs-3">Hydro<span class="text-info">Stats</span></span>
+                </div>
+                <small class="brand-subtitle">ANALISIS CURAH HUJAN</small>
+            </a>
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-lg-4">
+                    <li class="nav-item"><a class="nav-link fw-semibold" href="index.html">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link fw-semibold" href="analysis.html">Analisis Cuaca</a></li>
+                    <li class="nav-item"><a class="nav-link fw-semibold active" href="history.html">Arsip Data</a></li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-outline-info rounded-pill px-4 btn-sm fw-bold" href="rank.html">Peringkat
+                            Kota</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- ══════════════════════════════════════════════
+       MAIN
+  ══════════════════════════════════════════════ -->
+    <main class="container py-5">
+
+        <!-- Page Header -->
+        <header class="text-center mb-5">
+            <span class="section-label">HYDROSTATS ARSIP</span>
+            <h1 class="display-5 fw-bold text-white mt-2 mb-2">
+                Riwayat <span class="text-gradient">Curah Hujan</span>
+            </h1>
+            <p class="text-white-50 mb-0">
+                Analisis historis presipitasi 7 hari terakhir — data langsung dari Open-Meteo API.
+            </p>
+        </header>
+
+        <!-- ── ROW 1: Leaderboard + Coord Search ── -->
+        <div class="row g-4 align-items-start">
+
+            <!-- ─── LEFT: Leaderboard ─── -->
+            <div class="col-lg-7">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 class="fw-bold m-0 text-white">
+                            <i class="bi bi-trophy-fill text-warning me-2"></i>Top 5 Kota Rawan Hujan
+                        </h4>
+                        <p class="text-white-50 small mb-0 mt-1">Klik kartu untuk melihat detail per hari</p>
+                    </div>
+                    <button id="btn-refresh" class="btn btn-ghost btn-sm px-3 py-2" onclick="App.initLeaderboard()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- Leaderboard container (diisi JS) -->
+                <div id="leaderboard-list"></div>
+                <!-- Error container untuk leaderboard -->
+                <div id="leaderboard-error" class="d-none"></div>
+            </div>
+
+            <!-- ─── RIGHT: Coord Search Panel ─── -->
+            <!-- FIX: sticky-top bawaan Bootstrap punya z-index: 1020 sama dengan navbar lama.
+             Sekarang navbar sudah di z-index: 1030, panel ini perlu diberi z-index lebih
+             rendah secara eksplisit agar tidak menimpa navbar saat di-scroll. -->
+            <div class="col-lg-5">
+                <div class="card-glass p-4 sticky-top" style="top: 90px; cursor: default; z-index: 100;">
+
+                    <!-- Panel header -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-2"
+                                style="width:34px;height:34px;background:var(--cyan-dim);">
+                                <i class="bi bi-geo-alt-fill text-info fs-6"></i>
+                            </div>
+                            <h5 class="fw-bold text-white m-0">Cari berdasarkan Koordinat</h5>
+                        </div>
+                        <p class="text-white-50 small mb-0 mt-2" style="line-height: 1.5;">
+                            Masukkan koordinat untuk melihat riwayat curah hujan <strong class="text-white">7 hari
+                                terakhir</strong>
+                            di lokasi mana pun di dunia.
+                        </p>
+                    </div>
+
+                    <!-- Coord inputs -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label-custom">LATITUDE</label>
+                            <input type="number" id="lat-input" step="any" class="form-control input-dark"
+                                placeholder="-6.2000" min="-90" max="90" aria-label="Latitude">
+                            <div class="helper-text"><i class="bi bi-info-circle me-1"></i>Rentang: −90 hingga 90</div>
+                            <div id="lat-error" class="helper-text text-danger d-none"></div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-custom">LONGITUDE</label>
+                            <input type="number" id="lon-input" step="any" class="form-control input-dark"
+                                placeholder="106.8000" min="-180" max="180" aria-label="Longitude">
+                            <div class="helper-text"><i class="bi bi-info-circle me-1"></i>Rentang: −180 hingga 180
+                            </div>
+                            <div id="lon-error" class="helper-text text-danger d-none"></div>
+                        </div>
+                    </div>
+
+                    <!-- Contoh koordinat -->
+                    <div class="mb-4 p-3 rounded-3"
+                        style="background: rgba(13,202,240,0.06); border: 1px solid rgba(13,202,240,0.12);">
+                        <p class="small text-white-50 m-0">
+                            <i class="bi bi-lightbulb text-info me-1"></i>
+                            <strong class="text-white">Contoh:</strong>
+                            Jakarta <code class="text-info">−6.2, 106.8</code> ·
+                            Bali <code class="text-info">−8.4, 115.2</code> ·
+                            Manado <code class="text-info">1.5, 124.8</code>
+                        </p>
+                    </div>
+
+                    <!-- Coord action buttons -->
+                    <div id="coord-error" class="mb-3 d-none"></div>
+
+                    <div class="d-flex flex-column gap-2">
+                        <button id="btn-search" class="btn btn-cyan w-100 py-2" onclick="App.searchByCoord()">
+                            <span id="btn-search-label">
+                                <i class="bi bi-search me-2"></i>Cari Data Cuaca
+                            </span>
+                            <span id="btn-search-loading" class="d-none">
+                                <span class="spinner-border spinner-sm me-2" role="status"></span>Memuat...
+                            </span>
+                        </button>
+                        <button id="btn-geoloc" class="btn btn-ghost w-100 py-2" onclick="App.useMyLocation()">
+                            <i class="bi bi-crosshair me-2"></i>Gunakan Lokasi Saya
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div><!-- /ROW 1 -->
+
+
+        <!-- ── ROW 2: Coord Results (hidden until search) ── -->
+        <div id="coord-results" class="mt-4">
+            <div class="card-glass p-4">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <span class="section-label">HASIL PENCARIAN</span>
+                        <h5 class="fw-bold text-white m-0 mt-1" id="coord-result-title">—</h5>
+                        <small class="text-white-50" id="coord-result-subtitle">7 hari terakhir</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold fs-3 text-white" id="coord-result-total">—</div>
+                        <small class="text-info" style="font-size: 0.65rem; letter-spacing: 0.1em;">TOTAL
+                            AKUMULASI</small>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-container mb-4">
+                    <canvas id="coordChart"></canvas>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table class="table table-hydro mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Hari</th>
+                                <th class="text-end">Curah Hujan</th>
+                                <th class="text-end">Intensitas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coord-result-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /ROW 2 -->
+
+    </main>
+
+
+    <!-- ══════════════════════════════════════════════
+       MODAL: DETAIL KOTA
+  ══════════════════════════════════════════════ -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="modalTitle" aria-modal="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="modalTitle">Detail Curah Hujan</h5>
+                        <small class="text-white-50" id="modal-subtitle">7 hari terakhir</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Summary stats row -->
+                    <div class="row g-3 mb-4" id="modal-stats-row"></div>
+
+                    <!-- Chart -->
+                    <div class="chart-container mb-4">
+                        <canvas id="detailChart"></canvas>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hydro mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Hari</th>
+                                    <th class="text-end">Curah Hujan</th>
+                                    <th class="text-end">Intensitas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <small class="text-white-50">
+                        <i class="bi bi-database me-1"></i> Sumber: Open-Meteo Archive API
+                    </small>
+                    <button type="button" class="btn btn-ghost btn-sm" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════ -->
+    <footer class="mt-5 pt-5 pb-3 border-top border-secondary border-opacity-10"
+        style="background-color: rgba(7, 11, 20, 0.8);">
+        <div class="container-fluid px-4 px-lg-5">
+            <div class="row mb-4">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-droplet-half me-2 text-info fs-4"></i>
+                        <span class="fw-bold fs-4 text-white">Hydro<span class="text-info">Stats</span></span>
+                    </div>
+                    <p class="text-white-50 small pe-lg-5">
+                        Platform analisis presipitasi yang menggabungkan data meteorologi <i>real-time</i> dengan
+                        pendekatan
+                        numerik untuk menghasilkan informasi akumulasi air berpresisi tinggi.
+                    </p>
+                </div>
+
+                <div class="col-lg-2 col-6 mb-4 mb-lg-0">
+                    <h6 class="text-white fw-bold mb-3 tracking-wider" style="font-size: 0.8rem;">NAVIGASI</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none nav-link p-0">Beranda</a>
+                        </li>
+                        <li class="mb-2"><a href="#kalkulator"
+                                class="text-white-50 text-decoration-none nav-link p-0">Kalkulator
+                                Manual</a></li>
+                        <li class="mb-2"><a href="#peringkat"
+                                class="text-white-50 text-decoration-none nav-link p-0">Peringkat
+                                Global</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-6 mb-4 mb-lg-0">
+                    <h6 class="text-white fw-bold mb-3 tracking-wider" style="font-size: 0.8rem;">TEKNOLOGI</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a href="https://open-meteo.com/" target="_blank"
+                                class="text-white-50 text-decoration-none nav-link p-0">Open-Meteo API</a></li>
+                        <li class="mb-2"><a href="#"
+                                class="text-white-50 text-decoration-none nav-link p-0">Chart.js</a></li>
+                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none nav-link p-0">Bootstrap
+                                5</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-4 text-lg-end text-start">
+                    <h6 class="text-white fw-bold mb-3 tracking-wider" style="font-size: 0.8rem;">TERHUBUNG</h6>
+                    <div class="d-flex justify-content-lg-end gap-3">
+                        <a href="#" class="text-info fs-5 opacity-75 nav-link"><i class="bi bi-github"></i></a>
+                        <a href="#" class="text-info fs-5 opacity-75 nav-link"><i class="bi bi-envelope-fill"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-secondary border-opacity-25 my-4">
+
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="text-white-50 small mb-0">
+                        &copy; 2026 HydroStats. Dibuat dengan presisi logika.
+                    </p>
+                </div>
+                <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
+                    <p class="text-secondary small mb-0 fst-italic">
+                        *Data hanya untuk analisis akademis, bukan peringatan kebencanaan resmi.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ══════════════════════════════════════════════
+       JAVASCRIPT — MODULAR ARCHITECTURE
+  ══════════════════════════════════════════════ -->
+    <script>
+        'use strict';
+
+        // ════════════════════════════════════════════════
+        // LAYER 1 — API SERVICE
+        // Bertanggung jawab untuk semua komunikasi dengan API.
+        // Termasuk caching sederhana agar tidak ada double-fetch.
+        // ════════════════════════════════════════════════
+        const ApiService = {
+            _cache: new Map(),
+
+            /**
+             * Ambil data curah hujan harian 7 hari terakhir.
+             * Menggunakan cache key "rain:{lat}:{lon}" untuk menghindari re-fetch.
+             */
+            async getRainfall(lat, lon) {
+                const key = `rain:${lat}:${lon}`;
+                if (this._cache.has(key)) return this._cache.get(key);
+
+                const url = [
+                    `https://api.open-meteo.com/v1/forecast`,
+                    `?latitude=${lat}&longitude=${lon}`,
+                    `&daily=precipitation_sum`,
+                    `&past_days=7&forecast_days=0`,
+                    `&timezone=auto`
+                ].join('');
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status} — gagal ambil data cuaca`);
+
+                const data = await res.json();
+                if (!data?.daily?.precipitation_sum) throw new Error('Format response API tidak valid');
+
+                this._cache.set(key, data);
+                return data;
+            },
+
+            /**
+             * Ambil koordinat kota via geocoding API.
+             * Menggunakan cache key "geo:{cityName}".
+             */
+            async getCityCoords(cityName) {
+                const key = `geo:${cityName}`;
+                if (this._cache.has(key)) return this._cache.get(key);
+
+                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=id&format=json`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (!data?.results?.length) throw new Error(`Kota "${cityName}" tidak ditemukan`);
+
+                const result = data.results[0];
+                this._cache.set(key, result);
+                return result;
+            }
+        };
+
+
+        // ════════════════════════════════════════════════
+        // LAYER 2 — DATA PROCESSOR
+        // Semua kalkulasi dan transformasi data dilakukan di sini.
+        // Tidak ada DOM manipulation, hanya return pure values.
+        // ════════════════════════════════════════════════
+        const DataProcessor = {
+            /** Jumlahkan array angka, skip null/undefined */
+            sumPrecipitation(arr) {
+                return arr.reduce((acc, v) => acc + (v ?? 0), 0);
+            },
+
+            /**
+             * Format tanggal dari "YYYY-MM-DD" ke string yang readable.
+             * Tambahkan +1 hari untuk kompensasi timezone naive ISO date.
+             */
+            formatDate(dateStr, options = {}) {
+                // Gunakan T12:00 agar tidak kena shift timezone
+                const d = new Date(`${dateStr}T12:00:00`);
+                return d.toLocaleDateString('id-ID', options);
+            },
+
+            /** Hitung label intensitas berdasarkan mm/hari */
+            getRainLabel(mm) {
+                if (mm === 0) return { label: 'Tidak Hujan', color: '#475569' };
+                if (mm < 5) return { label: 'Ringan', color: '#22c55e' };
+                if (mm < 20) return { label: 'Sedang', color: '#0dcaf0' };
+                if (mm < 50) return { label: 'Lebat', color: '#6366f1' };
+                return { label: 'Sangat Lebat', color: '#ef4444' };
+            },
+
+            /** Bangun objek kota lengkap dari response coords + weather */
+            buildCityObject(coords, weatherData) {
+                const { precipitation_sum, time } = weatherData.daily;
+                return {
+                    name: coords.name,
+                    admin: coords.admin1 || coords.country || '—',
+                    lat: coords.latitude,
+                    lon: coords.longitude,
+                    total: this.sumPrecipitation(precipitation_sum),
+                    daily: { precipitation_sum, time }
+                };
+            }
+        };
+
+
+        // ════════════════════════════════════════════════
+        // LAYER 3 — UI RENDERER
+        // Semua DOM manipulation dipusatkan di sini.
+        // Setiap fungsi return HTML string atau langsung mutate DOM.
+        // ════════════════════════════════════════════════
+        const UI = {
+            _detailChart: null,
+            _coordChart: null,
+
+            // ── Skeleton Loading ──────────────────────────
+            renderSkeletons(count = 5) {
+                const container = document.getElementById('leaderboard-list');
+                container.innerHTML = Array.from({ length: count }, () => `
+        <div class="skeleton-card mb-3 d-flex align-items-center gap-3">
+          <div class="skeleton rounded-2" style="width:38px;height:38px;flex-shrink:0"></div>
+          <div class="flex-grow-1">
+            <div class="skeleton mb-2" style="height:14px;width:55%"></div>
+            <div class="skeleton" style="height:10px;width:35%"></div>
+          </div>
+          <div class="text-end">
+            <div class="skeleton mb-1 ms-auto" style="height:18px;width:64px"></div>
+            <div class="skeleton ms-auto" style="height:8px;width:48px"></div>
+          </div>
+        </div>
+      `).join('');
+            },
+
+            // ── Inline Error ──────────────────────────────
+            showError(containerId, message) {
+                const el = document.getElementById(containerId);
+                if (!el) return;
+                el.className = '';
+                el.innerHTML = `
+        <div class="alert-inline error">
+          <i class="bi bi-exclamation-circle-fill flex-shrink-0"></i>
+          <span>${message}</span>
+        </div>
+      `;
+            },
+
+            clearError(containerId) {
+                const el = document.getElementById(containerId);
+                if (el) { el.className = 'd-none'; el.innerHTML = ''; }
+            },
+
+            // ── Leaderboard ───────────────────────────────
+            renderLeaderboard(cities, maxTotal) {
+                const container = document.getElementById('leaderboard-list');
+                container.innerHTML = '';
+
+                if (!cities.length) {
+                    container.innerHTML = `
+          <div class="alert-inline warning">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Tidak ada data kota yang berhasil diambil. Periksa koneksi internet Anda.</span>
+          </div>`;
+                    return;
+                }
+
+                cities.forEach((city, i) => {
+                    const card = document.createElement('div');
+                    card.className = 'card-glass clickable p-3 mb-3';
+                    card.setAttribute('role', 'button');
+                    card.setAttribute('tabindex', '0');
+                    card.setAttribute('aria-label', `Lihat detail ${city.name}`);
+                    card.addEventListener('click', () => App.showCityDetail(city));
+                    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') App.showCityDetail(city); });
+
+                    const rankClass = ['rank-1', 'rank-2', 'rank-3'][i] || 'rank-other';
+                    const barWidth = maxTotal > 0 ? ((city.total / maxTotal) * 100).toFixed(1) : 0;
+
+                    card.innerHTML = `
+          <div class="d-flex align-items-center gap-3">
+            <div class="rank-badge ${rankClass}">#${i + 1}</div>
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex justify-content-between align-items-baseline">
+                <div>
+                  <span class="fw-bold text-white">${city.name}</span>
+                  <small class="text-white-50 ms-2">${city.admin}</small>
+                </div>
+                <div class="text-end ms-3 flex-shrink-0">
+                  <span class="fw-bold text-white fs-5">${city.total.toFixed(1)}</span>
+                  <small class="text-white-50"> mm</small>
+                </div>
+              </div>
+              <div class="rain-bar-track">
+                <div class="rain-bar-fill" style="width:0%" data-target="${barWidth}"></div>
+              </div>
+            </div>
+            <i class="bi bi-chevron-right text-white-50 flex-shrink-0" style="font-size:0.75rem"></i>
+          </div>
+        `;
+                    container.appendChild(card);
+                });
+
+                // Animasi bar setelah render (requestAnimationFrame untuk smooth)
+                requestAnimationFrame(() => {
+                    container.querySelectorAll('.rain-bar-fill').forEach(bar => {
+                        bar.style.width = bar.dataset.target + '%';
+                    });
+                });
+            },
+
+            // ── Chart Renderer (reusable untuk modal & coord results) ──
+            renderBarChart(canvasId, labels, dataPoints, existingInstance) {
+                const ctx = document.getElementById(canvasId)?.getContext('2d');
+                if (!ctx) return null;
+
+                if (existingInstance) existingInstance.destroy();
+
+                const maxVal = Math.max(...dataPoints, 1);
+
+                // Warna bar berdasarkan intensitas
+                const colors = dataPoints.map(v => {
+                    const ratio = v / maxVal;
+                    if (ratio === 0) return 'rgba(71,85,105,0.5)';
+                    if (ratio < 0.3) return 'rgba(34,197,94,0.75)';
+                    if (ratio < 0.6) return 'rgba(13,202,240,0.75)';
+                    if (ratio < 0.85) return 'rgba(99,102,241,0.75)';
+                    return 'rgba(239,68,68,0.75)';
+                });
+
+                return new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Curah Hujan (mm)',
+                            data: dataPoints,
+                            backgroundColor: colors,
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 600, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#0f172a',
+                                borderColor: 'rgba(255,255,255,0.08)',
+                                borderWidth: 1,
+                                titleColor: '#94a3b8',
+                                bodyColor: '#f1f5f9',
+                                padding: 10,
+                                callbacks: {
+                                    label: ctx => ` ${ctx.parsed.y.toFixed(1)} mm`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255,255,255,0.04)' },
+                                ticks: { color: '#64748b', font: { size: 11 } }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#64748b', font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+            },
+
+            // ── Tabel Baris ───────────────────────────────
+            buildTableRows(daily) {
+                return daily.time.map((dateStr, i) => {
+                    const mm = daily.precipitation_sum[i] ?? 0;
+                    const { label, color } = DataProcessor.getRainLabel(mm);
+                    const tanggal = DataProcessor.formatDate(dateStr, { day: 'numeric', month: 'short', year: 'numeric' });
+                    const hari = DataProcessor.formatDate(dateStr, { weekday: 'long' });
+
+                    // FIX: semua kolom pakai warna terang agar terbaca di atas dark background.
+                    // Sebelumnya <td>${hari}</td> mewarisi warna terlalu redup dari parent.
+                    return `
+          <tr>
+            <td class="text-white fw-semibold">${tanggal}</td>
+            <td style="color:#94a3b8">${hari}</td>
+            <td class="text-end fw-bold" style="color: ${color}">${mm.toFixed(1)} mm</td>
+            <td class="text-end">
+              <span class="badge rounded-pill px-2 py-1" style="background:${color}22;color:${color};font-size:0.67rem;border:1px solid ${color}44">
+                ${label}
+              </span>
+            </td>
+          </tr>`;
+                }).join('');
+            },
+
+            // ── Modal Stats Summary ───────────────────────
+            buildStatsRow(daily) {
+                const values = daily.precipitation_sum.filter(v => v > 0);
+                const max = values.length ? Math.max(...values).toFixed(1) : '—';
+                const avg = values.length ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : '—';
+                const days = values.length;
+
+                const stat = (icon, label, value, color = '#94a3b8') => `
+        <div class="col-4">
+          <div class="rounded-3 p-3 text-center" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">
+            <i class="bi ${icon} mb-1" style="color:${color};font-size:1.2rem"></i>
+            <div class="fw-bold text-white">${value}</div>
+            <div style="font-size:0.65rem;letter-spacing:.08em;color:#64748b">${label}</div>
+          </div>
+        </div>`;
+
+                return [
+                    stat('bi-droplet-fill', 'MAKS / HARI', `${max} mm`, '#0dcaf0'),
+                    stat('bi-bar-chart-fill', 'RATA-RATA', `${avg} mm`, '#6366f1'),
+                    stat('bi-calendar-check', 'HARI HUJAN', `${days} hari`, '#22c55e'),
+                ].join('');
+            },
+
+            // ── Render Modal ──────────────────────────────
+            renderModal(city) {
+                const labels = city.daily.time.map(d =>
+                    DataProcessor.formatDate(d, { day: 'numeric', month: 'short' })
+                );
+
+                // Isi konten modal
+                document.getElementById('modalTitle').textContent = city.name;
+                document.getElementById('modal-subtitle').textContent = `${city.admin} · 7 hari terakhir · Total: ${city.total.toFixed(1)} mm`;
+                document.getElementById('modal-stats-row').innerHTML = this.buildStatsRow(city.daily);
+                document.getElementById('modal-tbody').innerHTML = this.buildTableRows(city.daily);
+
+                // Render chart dengan sedikit delay agar canvas modal sudah ready
+                setTimeout(() => {
+                    this._detailChart = this.renderBarChart(
+                        'detailChart', labels,
+                        city.daily.precipitation_sum,
+                        this._detailChart
+                    );
+                }, 150);
+            },
+
+            // ── Render Coord Results ──────────────────────
+            renderCoordResults(city) {
+                const labels = city.daily.time.map(d =>
+                    DataProcessor.formatDate(d, { day: 'numeric', month: 'short' })
+                );
+
+                document.getElementById('coord-result-title').textContent = city.name;
+                document.getElementById('coord-result-subtitle').textContent = `7 hari terakhir`;
+                document.getElementById('coord-result-total').textContent = `${city.total.toFixed(1)} mm`;
+                document.getElementById('coord-result-tbody').innerHTML = this.buildTableRows(city.daily);
+
+                this._coordChart = this.renderBarChart(
+                    'coordChart', labels,
+                    city.daily.precipitation_sum,
+                    this._coordChart
+                );
+
+                // Tampilkan section dengan animasi
+                const section = document.getElementById('coord-results');
+                section.classList.add('visible');
+
+                // Scroll ke hasil
+                setTimeout(() => {
+                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        };
+
+
+        // ════════════════════════════════════════════════
+        // LAYER 4 — APP CONTROLLER
+        // Orkestrasi antar layer. Event handler masuk di sini.
+        // ════════════════════════════════════════════════
+        const App = {
+            CITIES: ["Medan", "Jakarta", "Surabaya", "Pontianak", "Makassar", "Bandung", "Batam"],
+
+            // ── Init Leaderboard ──────────────────────────
+            async initLeaderboard() {
+                const btnRefresh = document.getElementById('btn-refresh');
+                btnRefresh.disabled = true;
+                btnRefresh.innerHTML = '<span class="spinner-border spinner-sm me-1" role="status"></span> Memuat...';
+
+                UI.renderSkeletons(5);
+                UI.clearError('leaderboard-error');
+
+                try {
+                    // Promise.all: semua kota di-fetch PARALEL (jauh lebih cepat dari sequential loop)
+                    const cityDataPromises = this.CITIES.map(async (name) => {
+                        try {
+                            const coords = await ApiService.getCityCoords(name);
+                            const weather = await ApiService.getRainfall(coords.latitude, coords.longitude);
+                            return DataProcessor.buildCityObject(coords, weather);
+                        } catch (e) {
+                            console.warn(`[HydroStats] Gagal memuat "${name}":`, e.message);
+                            return null; // skip kota yang gagal, jangan crash semua
+                        }
+                    });
+
+                    const results = (await Promise.all(cityDataPromises)).filter(Boolean);
+                    const sorted = results.sort((a, b) => b.total - a.total);
+                    const top5 = sorted.slice(0, 5);
+                    const maxTotal = top5[0]?.total ?? 1;
+
+                    UI.renderLeaderboard(top5, maxTotal);
+
+                } catch (err) {
+                    document.getElementById('leaderboard-list').innerHTML = '';
+                    UI.showError('leaderboard-error', `Gagal memuat leaderboard: ${err.message}`);
+                } finally {
+                    btnRefresh.disabled = false;
+                    btnRefresh.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Refresh';
+                }
+            },
+
+            // ── Search by Coordinate ──────────────────────
+            async searchByCoord() {
+                // Ambil & parse input
+                const latVal = parseFloat(document.getElementById('lat-input').value);
+                const lonVal = parseFloat(document.getElementById('lon-input').value);
+
+                // Reset error state
+                ['lat-input', 'lon-input'].forEach(id => {
+                    document.getElementById(id).classList.remove('is-invalid-custom');
+                });
+                ['lat-error', 'lon-error', 'coord-error'].forEach(id => UI.clearError(id));
+
+                // Validasi
+                let valid = true;
+                if (isNaN(latVal)) {
+                    document.getElementById('lat-input').classList.add('is-invalid-custom');
+                    const el = document.getElementById('lat-error');
+                    el.textContent = 'Latitude wajib diisi.'; el.classList.remove('d-none');
+                    valid = false;
+                } else if (latVal < -90 || latVal > 90) {
+                    document.getElementById('lat-input').classList.add('is-invalid-custom');
+                    const el = document.getElementById('lat-error');
+                    el.textContent = 'Harus antara −90 dan 90.'; el.classList.remove('d-none');
+                    valid = false;
+                }
+
+                if (isNaN(lonVal)) {
+                    document.getElementById('lon-input').classList.add('is-invalid-custom');
+                    const el = document.getElementById('lon-error');
+                    el.textContent = 'Longitude wajib diisi.'; el.classList.remove('d-none');
+                    valid = false;
+                } else if (lonVal < -180 || lonVal > 180) {
+                    document.getElementById('lon-input').classList.add('is-invalid-custom');
+                    const el = document.getElementById('lon-error');
+                    el.textContent = 'Harus antara −180 dan 180.'; el.classList.remove('d-none');
+                    valid = false;
+                }
+
+                if (!valid) return;
+
+                // Set loading state
+                this._setSearchLoading(true);
+
+                try {
+                    const weather = await ApiService.getRainfall(latVal, lonVal);
+                    const total = DataProcessor.sumPrecipitation(weather.daily.precipitation_sum);
+
+                    UI.renderCoordResults({
+                        name: `Koordinat (${latVal.toFixed(4)}, ${lonVal.toFixed(4)})`,
+                        admin: 'Lokasi kustom',
+                        total,
+                        daily: weather.daily
+                    });
+                } catch (err) {
+                    UI.showError('coord-error', `Gagal mengambil data: ${err.message}`);
+                } finally {
+                    this._setSearchLoading(false);
+                }
+            },
+
+            // ── Use My Location ───────────────────────────
+            useMyLocation() {
+                if (!navigator.geolocation) {
+                    UI.showError('coord-error', 'Browser Anda tidak mendukung Geolocation API.');
+                    return;
+                }
+
+                const btn = document.getElementById('btn-geoloc');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-sm me-2" role="status"></span>Mendeteksi...';
+
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const lat = pos.coords.latitude.toFixed(6);
+                        const lon = pos.coords.longitude.toFixed(6);
+
+                        document.getElementById('lat-input').value = lat;
+                        document.getElementById('lon-input').value = lon;
+
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-crosshair me-2"></i>Gunakan Lokasi Saya';
+
+                        // Langsung trigger search
+                        this.searchByCoord();
+                    },
+                    (err) => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-crosshair me-2"></i>Gunakan Lokasi Saya';
+
+                        const messages = {
+                            1: 'Izin lokasi ditolak. Harap izinkan akses lokasi di browser Anda.',
+                            2: 'Lokasi tidak tersedia saat ini.',
+                            3: 'Permintaan lokasi timeout. Coba lagi.'
+                        };
+                        UI.showError('coord-error', messages[err.code] || 'Gagal mendapatkan lokasi.');
+                    },
+                    { timeout: 10000, maximumAge: 300000 }
+                );
+            },
+
+            // ── Show City Detail Modal ────────────────────
+            showCityDetail(city) {
+                UI.renderModal(city);
+                new bootstrap.Modal(document.getElementById('detailModal')).show();
+            },
+
+            // ── Helper: Toggle Search Button State ───────
+            _setSearchLoading(isLoading) {
+                const btn = document.getElementById('btn-search');
+                document.getElementById('btn-search-label').classList.toggle('d-none', isLoading);
+                document.getElementById('btn-search-loading').classList.toggle('d-none', !isLoading);
+                btn.disabled = isLoading;
+                document.getElementById('btn-geoloc').disabled = isLoading;
+            }
+        };
+
+
+        // ════════════════════════════════════════════════
+        // BOOTSTRAP — Jalankan saat DOM siap
+        // ════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            App.initLeaderboard();
+
+            // Allow Enter key di input untuk trigger search
+            ['lat-input', 'lon-input'].forEach(id => {
+                document.getElementById(id).addEventListener('keydown', e => {
+                    if (e.key === 'Enter') App.searchByCoord();
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
