@@ -12,6 +12,14 @@
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- KaTeX: Render formula matematika LaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+        integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5"
+        crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+        integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"
+        crossorigin="anonymous"></script>
+
     <style>
         /* --- GLOBAL STYLE --- */
         body {
@@ -350,6 +358,153 @@
             border-top: 1px solid rgba(255, 255, 255, 0.05);
             padding: 2.5rem 0;
         }
+
+        /* ================================================================
+           KATEX — STEP-BY-STEP MATH CARDS
+        ================================================================ */
+        #math-steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        /* Vertical connector rail */
+        #math-steps-container::before {
+            content: '';
+            position: absolute;
+            left: 22px;
+            top: 44px;
+            bottom: 44px;
+            width: 1px;
+            background: linear-gradient(
+                to bottom,
+                rgba(13, 202, 240, 0.5) 0%,
+                rgba(13, 202, 240, 0.15) 70%,
+                rgba(29, 200, 120, 0.4) 100%
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Card ──────────────────────────────────────────────────── */
+        .math-step-card {
+            position: relative;
+            z-index: 1;
+            background: rgba(7, 11, 20, 0.65);
+            border: 1px solid rgba(13, 202, 240, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+
+        .math-step-card:hover {
+            border-color: rgba(13, 202, 240, 0.28);
+            box-shadow: 0 0 22px rgba(13, 202, 240, 0.06);
+        }
+
+        .math-step-card.math-card-result {
+            border-color: rgba(29, 200, 120, 0.28);
+            background: rgba(29, 200, 120, 0.04);
+        }
+
+        .math-step-card.math-card-result:hover {
+            border-color: rgba(29, 200, 120, 0.55);
+            box-shadow: 0 0 28px rgba(29, 200, 120, 0.1);
+        }
+
+        /* ── Card Header ───────────────────────────────────────────── */
+        .math-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem 1.1rem;
+            background: rgba(13, 202, 240, 0.04);
+            border-bottom: 1px solid rgba(13, 202, 240, 0.07);
+        }
+
+        .math-card-result .math-card-header {
+            background: rgba(29, 200, 120, 0.05);
+            border-bottom-color: rgba(29, 200, 120, 0.12);
+        }
+
+        /* Step number badge (the glowing circle) */
+        .math-card-badge {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(13, 202, 240, 0.1);
+            border: 1px solid rgba(13, 202, 240, 0.4);
+            color: #0dcaf0;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0;
+            box-shadow: 0 0 12px rgba(13, 202, 240, 0.22), inset 0 0 6px rgba(13, 202, 240, 0.08);
+        }
+
+        .math-card-result .math-card-badge {
+            background: rgba(29, 200, 120, 0.1);
+            border-color: rgba(29, 200, 120, 0.45);
+            color: #1dc878;
+            box-shadow: 0 0 12px rgba(29, 200, 120, 0.28), inset 0 0 6px rgba(29, 200, 120, 0.08);
+        }
+
+        .math-card-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            letter-spacing: 0.2px;
+        }
+
+        .math-card-subtitle {
+            font-size: 0.63rem;
+            color: #475569;
+            margin-top: 1px;
+        }
+
+        /* ── Card Body ─────────────────────────────────────────────── */
+        .math-card-body {
+            padding: 0.85rem 1.1rem 1rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* ── Formula Lines ─────────────────────────────────────────── */
+        .math-line {
+            overflow-x: auto;
+            padding: 0.15rem 0;
+        }
+
+        /* Indented continuation: "= ..." lines */
+        .math-line-indent {
+            padding-left: 1.25rem;
+            margin-left: 0.4rem;
+            border-left: 2px solid rgba(13, 202, 240, 0.18);
+        }
+
+        /* Highlighted result line */
+        .math-line-highlight {
+            padding: 0.6rem 1rem;
+            background: rgba(29, 200, 120, 0.07);
+            border: 1px solid rgba(29, 200, 120, 0.22);
+            border-radius: 8px;
+            margin-top: 4px;
+        }
+
+        /* ── KaTeX Color Overrides ─────────────────────────────────── */
+        .math-line .katex               { color: #a5f3fc; font-size: 1rem; }
+        .math-line-indent .katex        { color: #93c5fd; }
+        .math-line-highlight .katex     { color: #6ee7b7; font-size: 1.08rem; }
+
+        /* Thin horizontal scrollbar inside formula lines */
+        .math-line::-webkit-scrollbar         { height: 3px; }
+        .math-line::-webkit-scrollbar-track   { background: transparent; }
+        .math-line::-webkit-scrollbar-thumb   { background: rgba(13, 202, 240, 0.3); border-radius: 3px; }
     </style>
 </head>
 
@@ -734,6 +889,28 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ============================================================
+                     PENJABARAN MATEMATIS — KaTeX (6 Langkah)
+                ============================================================ -->
+                <div class="step-fade-in">
+                    <div class="bg-dark bg-opacity-50 p-3 rounded-3 border border-secondary border-opacity-10">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="text-white-50 small mb-0 fw-bold">
+                                <i class="bi bi-infinity text-info me-1"></i>
+                                PENJABARAN MATEMATIS LENGKAP — COMPOSITE TRAPEZOIDAL RULE
+                            </h6>
+                            <span class="badge"
+                                style="font-size:0.6rem; background:rgba(13,202,240,0.1); border:1px solid rgba(13,202,240,0.25); color:#0dcaf0; letter-spacing:0.8px;">
+                                6 LANGKAH
+                            </span>
+                        </div>
+                        <div id="math-steps-container">
+                            <!-- Diisi secara dinamis oleh renderMathSteps() -->
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -1092,6 +1269,7 @@
             renderChart(labels, dataPoints, mode);
             renderHeader(total);
             renderSteps(trapezoids, dtValue, total);
+            renderMathSteps(dataPoints, dtValue, total);
         }
 
         /* =========================================================
@@ -1171,6 +1349,201 @@
                 </tr>`;
 
             tbody.innerHTML = html;
+        }
+
+        /* =========================================================
+           RENDER: PENJABARAN MATEMATIS — 6 LANGKAH (KaTeX)
+        ========================================================= */
+        function renderMathSteps(dataPoints, dtValue, total) {
+            const container = document.getElementById('math-steps-container');
+            if (!container || typeof katex === 'undefined') return;
+            container.innerHTML = '';
+
+            const dp     = dataPoints;
+            const n      = dp.length - 1;           // jumlah interval
+            const dt     = parseFloat(dtValue);
+            const isLong = dp.length > 5;           // array panjang → pakai \cdots
+            const halfDt = parseFloat((dt / 2).toFixed(8));
+
+            // Hitung innerSum = f₀ + 2f₁ + 2f₂ + … + 2f_{n-1} + fₙ
+            // (kalkulasi SELALU menggunakan SEMUA data, bukan data yang dipotong)
+            let innerSum = dp[0];
+            for (let i = 1; i < n; i++) innerSum += 2 * dp[i];
+            innerSum += dp[n];
+            innerSum = parseFloat(innerSum.toFixed(8));
+
+            // ── Langkah 1: Rumus Umum ─────────────────────────────────────
+            const s1 = _card(1, 'Rumus Umum',
+                'Composite Trapezoidal Rule — dasar seluruh perhitungan');
+            _line(s1,
+                'V = \\dfrac{\\Delta t}{2}' +
+                '\\Bigl[f(t_0) + 2f(t_1) + 2f(t_2) + \\cdots + 2f(t_{n-1}) + f(t_n)\\Bigr]',
+                false, false);
+            container.appendChild(s1);
+
+            // ── Langkah 2: Identifikasi Data ──────────────────────────────
+            const s2 = _card(2, 'Identifikasi Data',
+                'Baca nilai Δt dan seluruh titik intensitas f(tᵢ) dari input');
+            // Baris: nilai Δt
+            _line(s2, `\\Delta t = ${_fmt(dt)} \\text{ jam}`, false, false);
+            // Baris: jumlah interval
+            _line(s2, `n = ${n} \\text{ (jumlah interval)}`, false, false);
+            // Baris: daftar f(tᵢ) — tampilkan penuh jika ≤5, potong dengan \cdots jika lebih
+            if (!isLong) {
+                const pairs = dp
+                    .map((v, i) => `f(t_{${i}}) = ${_fmt(v)}`)
+                    .join('\\,,\\enspace ');
+                _line(s2, pairs, false, false);
+            } else {
+                const pairs =
+                    `f(t_0) = ${_fmt(dp[0])},\\enspace ` +
+                    `f(t_1) = ${_fmt(dp[1])},\\enspace ` +
+                    `\\cdots,\\enspace ` +
+                    `f(t_{${n-1}}) = ${_fmt(dp[n-1])},\\enspace ` +
+                    `f(t_{${n}}) = ${_fmt(dp[n])}`;
+                _line(s2, pairs, false, false);
+            }
+            container.appendChild(s2);
+
+            // ── Langkah 3: Substitusi ke Rumus ────────────────────────────
+            const s3 = _card(3, 'Substitusi ke Rumus',
+                'Masukkan semua nilai f(tᵢ) dan Δt ke dalam rumus umum');
+            let innerTerms;
+            if (!isLong) {
+                innerTerms = dp.map((v, i) => {
+                    if (i === 0 || i === n) return _fmt(v);
+                    return `2(${_fmt(v)})`;
+                }).join(' + ');
+            } else {
+                innerTerms =
+                    `${_fmt(dp[0])} + 2(${_fmt(dp[1])}) + ` +
+                    `\\cdots + 2(${_fmt(dp[n-1])}) + ${_fmt(dp[n])}`;
+            }
+            _line(s3,
+                `V = \\dfrac{${_fmt(dt)}}{2}\\Bigl[${innerTerms}\\Bigr]`,
+                false, false);
+            container.appendChild(s3);
+
+            // ── Langkah 4: Hitung Penjumlahan dalam Kurung ────────────────
+            const s4 = _card(4, 'Hitung Penjumlahan dalam Kurung',
+                'Kalikan koefisien 2 ke setiap suku tengah, lalu jumlahkan semua suku');
+
+            if (!isLong) {
+                // Tampilkan setiap suku setelah dikalikan koefisiennya
+                const expanded = dp.map((v, i) => {
+                    if (i === 0 || i === n) return _fmt(v);
+                    return _fmt(parseFloat((2 * v).toFixed(8)));
+                }).join(' + ');
+                _line(s4,
+                    `= \\dfrac{${_fmt(dt)}}{2}\\Bigl[${expanded}\\Bigr]`,
+                    true, false);
+            } else {
+                // Kelompokkan suku tengah dan hitung jumlahnya
+                let midSum = 0;
+                for (let i = 1; i < n; i++) midSum += dp[i];
+                midSum = parseFloat(midSum.toFixed(8));
+                const midDoubled = parseFloat((2 * midSum).toFixed(8));
+
+                // Baris: faktorkan suku tengah
+                _line(s4,
+                    `= \\dfrac{${_fmt(dt)}}{2}\\Bigl[` +
+                    `${_fmt(dp[0])} + 2\\bigl(${_fmt(dp[1])} + \\cdots + ${_fmt(dp[n-1])}\\bigr) + ${_fmt(dp[n])}\\Bigr]`,
+                    true, false);
+                // Baris: nilai numerik suku tengah tergabung
+                _line(s4,
+                    `= \\dfrac{${_fmt(dt)}}{2}\\Bigl[` +
+                    `${_fmt(dp[0])} + ${_fmt(midDoubled)} + ${_fmt(dp[n])}\\Bigr]`,
+                    true, false);
+            }
+
+            // Baris akhir step 4: tampilkan jumlah kurung final
+            _line(s4,
+                `= \\dfrac{${_fmt(dt)}}{2}\\Bigl[${_fmt(innerSum)}\\Bigr]`,
+                true, false);
+            container.appendChild(s4);
+
+            // ── Langkah 5: Perhitungan Akhir ──────────────────────────────
+            const s5 = _card(5, 'Perhitungan Akhir',
+                'Kalikan faktor ½Δt dengan hasil penjumlahan dalam kurung');
+            _line(s5,
+                `= ${_fmt(halfDt)} \\times ${_fmt(innerSum)}`,
+                true, false);
+            _line(s5,
+                `= ${_fmt(parseFloat(total.toFixed(6)))}`,
+                true, false);
+            container.appendChild(s5);
+
+            // ── Langkah 6: Hasil Akhir ────────────────────────────────────
+            const s6 = _card(6, 'Hasil Akhir',
+                'Total volume akumulasi presipitasi yang diperoleh dari integrasi numerik');
+            s6.classList.add('math-card-result');
+            _line(s6,
+                `\\boxed{\\,V = ${_fmt(parseFloat(total.toFixed(4)))} \\text{ mm}\\,}`,
+                false, true);
+            container.appendChild(s6);
+        }
+
+        /* ─── Helper: buat satu card langkah ─────────────────────────── */
+        function _card(num, title, subtitle) {
+            const card = document.createElement('div');
+            card.className = 'math-step-card';
+
+            // Header
+            const header = document.createElement('div');
+            header.className = 'math-card-header';
+
+            const badge = document.createElement('span');
+            badge.className = 'math-card-badge';
+            badge.textContent = num;
+
+            const info = document.createElement('div');
+            const t = document.createElement('div');
+            t.className = 'math-card-title';
+            t.textContent = title;
+            const s = document.createElement('div');
+            s.className = 'math-card-subtitle';
+            s.textContent = subtitle;
+            info.appendChild(t);
+            info.appendChild(s);
+
+            header.appendChild(badge);
+            header.appendChild(info);
+
+            // Body
+            const body = document.createElement('div');
+            body.className = 'math-card-body';
+
+            card.appendChild(header);
+            card.appendChild(body);
+            return card;
+        }
+
+        /* ─── Helper: tambahkan satu baris formula ke card ────────────── */
+        function _line(card, latex, isIndent, isHighlight) {
+            const body = card.querySelector('.math-card-body');
+            const div  = document.createElement('div');
+            div.className =
+                'math-line' +
+                (isIndent    ? ' math-line-indent'    : '') +
+                (isHighlight ? ' math-line-highlight' : '');
+            try {
+                katex.render(latex, div, {
+                    throwOnError: false,
+                    displayMode: true,
+                    output: 'html'
+                });
+            } catch (e) {
+                div.textContent = latex;   // fallback teks biasa
+            }
+            body.appendChild(div);
+        }
+
+        /* ─── Helper: format angka — maks 4 desimal, hapus trailing zero ─ */
+        function _fmt(num) {
+            const n = parseFloat(num);
+            if (!isFinite(n)) return '0';
+            if (Number.isInteger(n)) return String(n);
+            return parseFloat(n.toFixed(4)).toString();
         }
 
         /* =========================================================
